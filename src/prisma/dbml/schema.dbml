@@ -1,0 +1,413 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Users {
+  id Int [pk, increment]
+  fullName String
+  profilePicture String
+  dateOfBirth DateTime
+  gender GENDERS
+  address String
+  phoneNumber String
+  instagramUsername String
+  instagramFollowersCount Int
+  zoomId String
+  role USER_ROLES [not null]
+  loginMethod LOGIN_METHODS [not null]
+  socialToken String
+  email String [unique, not null]
+  stripeCustomerId String [unique, not null]
+  stripeAccountId String
+  isEmailVerified Boolean [not null, default: false]
+  isStripeVerified Boolean [not null, default: false]
+  isProfileComplete Boolean [not null, default: false]
+  fcmToken String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  UserPasswords UserPasswords [not null]
+  UserOTP UserOTP [not null]
+  UserAthleticAchievements UserAthleticAchievements [not null]
+  UserGallery UserGallery [not null]
+  Jobs Jobs [not null]
+  UserSavedJobs UserSavedJobs [not null]
+  UserHiddenJobs UserHiddenJobs [not null]
+  JobApplications JobApplications [not null]
+  UserWallet UserWallet [not null]
+  AthleteInfo AthleteInfo
+  BusinessInfo BusinessInfo
+  ReportedJobs ReportedJobs [not null]
+  Participants Participants [not null]
+  Messages Messages [not null]
+  UserSchedules UserSchedules [not null]
+  UserPreference UserPreference
+  Feedback Feedback [not null]
+  FavoriteBusinesses UserFavoriteBusinesses [not null]
+  BusinessesFavoritedBy UserFavoriteBusinesses [not null]
+}
+
+Table AthleteInfo {
+  id Int [pk, increment]
+  userId Int [unique, not null]
+  instagramUsername String
+  schoolName String
+  sportId Int
+  year Int
+  position String
+  attachment String
+  bio String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+}
+
+Table BusinessInfo {
+  id Int [pk, increment]
+  userId Int [unique, not null]
+  organizationName String
+  industryType String
+  founded String
+  overview String
+  phoneNumber String
+  email String
+  website String
+  isPremium Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+}
+
+Table UserPasswords {
+  id Int [pk, increment]
+  userId Int [not null]
+  password String [not null]
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+}
+
+Table UserOTP {
+  id Int [pk, increment]
+  userId Int [not null]
+  otp String [not null]
+  isExpired Boolean [not null, default: false]
+  expirationDateTime DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  User Users [not null]
+}
+
+Table UserAthleticAchievements {
+  id Int [pk, increment]
+  userId Int [not null]
+  gameName String [not null]
+  medalCount Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+}
+
+Table UserGallery {
+  id Int [pk, increment]
+  userId Int [not null]
+  path String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+}
+
+Table UserWallet {
+  id Int [pk, increment]
+  userId Int [not null]
+  amount Int [not null]
+  transactionType TRANSACTION_TYPE [not null]
+  sourceId Int
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+  Source Jobs
+}
+
+Table Sports {
+  id Int [pk, increment]
+  name String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Jobs {
+  id Int [pk, increment]
+  userId Int [not null]
+  title String [not null]
+  description String [not null]
+  bannerImage String [not null]
+  salary Int [not null]
+  sportId Int [not null]
+  type JOB_TYPE [not null]
+  status JOB_STATUS [not null, default: 'OPEN']
+  hasPaid Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+  JobRequiredQualifications JobRequiredQualifications [not null]
+  UserSavedJobs UserSavedJobs [not null]
+  UserHiddenJobs UserHiddenJobs [not null]
+  JobApplications JobApplications [not null]
+  ReportedJobs ReportedJobs [not null]
+  UserSchedules UserSchedules [not null]
+  UserWallet UserWallet [not null]
+}
+
+Table JobApplications {
+  id Int [pk, increment]
+  jobId Int [not null]
+  userId Int [not null]
+  status JOB_APPLICATION_STATUS [not null, default: 'APPLIED']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  Job Jobs [not null]
+  User Users [not null]
+}
+
+Table JobRequiredQualifications {
+  id Int [pk, increment]
+  jobId Int [not null]
+  description String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  Job Jobs [not null]
+}
+
+Table UserSavedJobs {
+  id Int [pk, increment]
+  userId Int [not null]
+  jobId Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+  Job Jobs [not null]
+}
+
+Table UserNotifications {
+  id Int [pk, increment]
+  userId Int [not null]
+  title String [not null]
+  description String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table UserHiddenJobs {
+  id Int [pk, increment]
+  userId Int [not null]
+  jobId Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+  Job Jobs [not null]
+}
+
+Table UserFavoriteBusinesses {
+  id Int [pk, increment]
+  userId Int [not null]
+  businessId Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+  Business Users [not null]
+}
+
+Table ReportedJobs {
+  id Int [pk, increment]
+  userId Int [not null]
+  jobId Int [not null]
+  reason String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User Users [not null]
+  Job Jobs [not null]
+}
+
+Table Chats {
+  id Int [pk, increment]
+  name String
+  type CHAT_TYPE [not null]
+  Participants Participants [not null]
+  Messages Messages [not null]
+}
+
+Table Participants {
+  id Int [pk, increment]
+  chatId Int [not null]
+  userId Int [not null]
+  Chat Chats [not null]
+  User Users [not null]
+}
+
+Table Messages {
+  id Int [pk, increment]
+  chatId Int [not null]
+  senderId Int [not null]
+  content String
+  createdAt DateTime [default: `now()`, not null]
+  Chat Chats [not null]
+  User Users [not null]
+  Files Files
+}
+
+Table Files {
+  id Int [pk, increment]
+  messageId Int [unique, not null]
+  fileName String [not null]
+  orignalName String [not null]
+  mimeType String [not null]
+  size Float [not null]
+  createdAt DateTime [default: `now()`, not null]
+  Message Messages [not null]
+}
+
+Table UserSchedules {
+  id Int [pk, increment]
+  userId Int [not null]
+  jobId Int [not null]
+  meetingDateTime DateTime [not null]
+  zoomMeetingLink String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  User Users [not null]
+  Job Jobs [not null]
+}
+
+Table UserPreference {
+  id Int [pk, increment]
+  userId Int [unique, not null]
+  receivePushNotifications Boolean [not null, default: true]
+  User Users [not null]
+}
+
+Table Feedback {
+  id Int [pk, increment]
+  userId Int [not null]
+  text String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  User Users [not null]
+  FeedbackImages FeedbackImages [not null]
+}
+
+Table FeedbackImages {
+  id Int [pk, increment]
+  feedbackId Int [not null]
+  path String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  Feedback Feedback [not null]
+}
+
+Enum USER_ROLES {
+  ATHLETE
+  BUSINESS
+  ADMIN
+}
+
+Enum GENDERS {
+  MALE
+  FEMALE
+  OTHER
+}
+
+Enum LOGIN_METHODS {
+  EMAIL
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
+
+Enum JOB_TYPE {
+  SOCIAL_MEDIA
+  MEET_AND_GREET
+  AUTOGRAPHS
+  PHOTO_SHOOTS
+  OTHER
+}
+
+Enum JOB_STATUS {
+  OPEN
+  FILLED
+  COMPLETED
+}
+
+Enum JOB_APPLICATION_STATUS {
+  APPLIED
+  WAITLISTED
+  REJECTED
+  HIRED
+  COMPLETED
+}
+
+Enum CHAT_TYPE {
+  PRIVATE
+  GROUP
+}
+
+Enum TRANSACTION_TYPE {
+  DEBIT
+  CREDIT
+}
+
+Ref: AthleteInfo.userId - Users.id [delete: Cascade]
+
+Ref: BusinessInfo.userId - Users.id [delete: Cascade]
+
+Ref: UserPasswords.userId > Users.id [delete: Cascade]
+
+Ref: UserOTP.userId > Users.id [delete: Cascade]
+
+Ref: UserAthleticAchievements.userId > Users.id [delete: Cascade]
+
+Ref: UserGallery.userId > Users.id [delete: Cascade]
+
+Ref: UserWallet.userId > Users.id [delete: Cascade]
+
+Ref: UserWallet.sourceId > Jobs.id [delete: Cascade]
+
+Ref: Jobs.userId > Users.id [delete: Cascade]
+
+Ref: JobApplications.jobId > Jobs.id [delete: Cascade]
+
+Ref: JobApplications.userId > Users.id [delete: Cascade]
+
+Ref: JobRequiredQualifications.jobId > Jobs.id [delete: Cascade]
+
+Ref: UserSavedJobs.userId > Users.id [delete: Cascade]
+
+Ref: UserSavedJobs.jobId > Jobs.id [delete: Cascade]
+
+Ref: UserHiddenJobs.userId > Users.id [delete: Cascade]
+
+Ref: UserHiddenJobs.jobId > Jobs.id [delete: Cascade]
+
+Ref: UserFavoriteBusinesses.userId > Users.id [delete: Cascade]
+
+Ref: UserFavoriteBusinesses.businessId > Users.id [delete: Cascade]
+
+Ref: ReportedJobs.userId > Users.id [delete: Cascade]
+
+Ref: ReportedJobs.jobId > Jobs.id [delete: Cascade]
+
+Ref: Participants.chatId > Chats.id [delete: Cascade]
+
+Ref: Participants.userId > Users.id [delete: Cascade]
+
+Ref: Messages.chatId > Chats.id [delete: Cascade]
+
+Ref: Messages.senderId > Users.id [delete: Cascade]
+
+Ref: Files.messageId - Messages.id [delete: Cascade]
+
+Ref: UserSchedules.userId > Users.id [delete: Cascade]
+
+Ref: UserSchedules.jobId > Jobs.id [delete: Cascade]
+
+Ref: UserPreference.userId - Users.id [delete: Cascade]
+
+Ref: Feedback.userId > Users.id
+
+Ref: FeedbackImages.feedbackId > Feedback.id [delete: Cascade]

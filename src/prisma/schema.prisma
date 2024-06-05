@@ -1,0 +1,366 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+
+model Users {
+  id                       Int                        @id @default(autoincrement())
+  fullName                 String?
+  profilePicture           String?                    @db.Text
+  dateOfBirth              DateTime?
+  gender                   GENDERS?
+  address                  String?                    @db.Text
+  phoneNumber              String?
+  instagramUsername        String?
+  instagramFollowersCount  Int?
+  zoomId                   String?
+  role                     USER_ROLES
+  loginMethod              LOGIN_METHODS
+  socialToken              String?
+  email                    String                     @unique
+  stripeCustomerId         String                     @unique
+  stripeAccountId          String?
+  isEmailVerified          Boolean                    @default(false)
+  isStripeVerified         Boolean                    @default(false)
+  isProfileComplete        Boolean                    @default(false)
+  fcmToken                 String?                    @db.Text
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  UserPasswords            UserPasswords[]
+  UserOTP                  UserOTP[]
+  UserAthleticAchievements UserAthleticAchievements[]
+  UserGallery              UserGallery[]
+  Jobs                     Jobs[]
+  UserSavedJobs            UserSavedJobs[]
+  UserHiddenJobs           UserHiddenJobs[]
+  JobApplications          JobApplications[]
+  UserWallet               UserWallet[]
+  AthleteInfo              AthleteInfo?
+  BusinessInfo             BusinessInfo?
+  ReportedJobs             ReportedJobs[]
+  Participants             Participants[]
+  Messages                 Messages[]
+  UserSchedules            UserSchedules[]
+  UserPreference           UserPreference?
+  Feedback                 Feedback[]
+  FavoriteBusinesses       UserFavoriteBusinesses[]   @relation("Business")
+  BusinessesFavoritedBy    UserFavoriteBusinesses[]   @relation("User")
+}
+
+model AthleteInfo {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  instagramUsername String?
+  schoolName        String?
+  sportId           Int?
+  year              Int?
+  position          String?
+  attachment        String?  @db.Text
+  bio               String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  User              Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model BusinessInfo {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @unique
+  organizationName String?
+  industryType     String?
+  founded          String?
+  overview         String?  @db.Text
+  phoneNumber      String?
+  email            String?
+  website          String?
+  isPremium        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  User             Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserPasswords {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  password  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserOTP {
+  id                 Int      @id @default(autoincrement())
+  userId             Int
+  otp                String
+  isExpired          Boolean  @default(false)
+  expirationDateTime DateTime
+  createdAt          DateTime @default(now())
+  User               Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserAthleticAchievements {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  gameName   String
+  medalCount Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  User       Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserGallery {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  path      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserWallet {
+  id              Int              @id @default(autoincrement())
+  userId          Int
+  amount          Int
+  transactionType TRANSACTION_TYPE
+  sourceId        Int?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  User            Users            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Source          Jobs?            @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+model Sports {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Jobs {
+  id                        Int                         @id @default(autoincrement())
+  userId                    Int
+  title                     String                      @db.Text
+  description               String                      @db.Text
+  bannerImage               String                      @db.Text
+  salary                    Int
+  sportId                   Int
+  type                      JOB_TYPE
+  status                    JOB_STATUS                  @default(OPEN)
+  hasPaid                   Boolean                     @default(false)
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime                    @updatedAt
+  User                      Users                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  JobRequiredQualifications JobRequiredQualifications[]
+  UserSavedJobs             UserSavedJobs[]
+  UserHiddenJobs            UserHiddenJobs[]
+  JobApplications           JobApplications[]
+  ReportedJobs              ReportedJobs[]
+  UserSchedules             UserSchedules[]
+  UserWallet                UserWallet[]
+}
+
+model JobApplications {
+  id        Int                    @id @default(autoincrement())
+  jobId     Int
+  userId    Int
+  status    JOB_APPLICATION_STATUS @default(APPLIED)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  Job       Jobs                   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  User      Users                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JobRequiredQualifications {
+  id          Int      @id @default(autoincrement())
+  jobId       Int
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Job         Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model UserSavedJobs {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  jobId     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Job       Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model UserNotifications {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  title       String   @db.Text
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserHiddenJobs {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  jobId     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Job       Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model UserFavoriteBusinesses {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  businessId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  User       Users    @relation(name: "User", fields: [userId], references: [id], onDelete: Cascade)
+  Business   Users    @relation(name: "Business", fields: [businessId], references: [id], onDelete: Cascade)
+}
+
+model ReportedJobs {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  jobId     Int
+  reason    String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Job       Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model Chats {
+  id           Int            @id @default(autoincrement())
+  name         String?
+  type         CHAT_TYPE
+  Participants Participants[]
+  Messages     Messages[]
+}
+
+model Participants {
+  id     Int   @id @default(autoincrement())
+  chatId Int
+  userId Int
+  Chat   Chats @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  User   Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Messages {
+  id        Int      @id @default(autoincrement())
+  chatId    Int
+  senderId  Int
+  content   String?  @db.Text
+  createdAt DateTime @default(now())
+  Chat      Chats    @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  User      Users    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  Files     Files?
+}
+
+model Files {
+  id          Int      @id @default(autoincrement())
+  messageId   Int      @unique
+  fileName    String
+  orignalName String
+  mimeType    String
+  size        Float
+  createdAt   DateTime @default(now())
+  Message     Messages @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model UserSchedules {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  jobId           Int
+  meetingDateTime DateTime
+  zoomMeetingLink String
+  createdAt       DateTime @default(now())
+  User            Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Job             Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model UserPreference {
+  id                       Int     @id @default(autoincrement())
+  userId                   Int     @unique
+  receivePushNotifications Boolean @default(true)
+  User                     Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Feedback {
+  id             Int              @id @default(autoincrement())
+  userId         Int
+  text           String           @db.Text
+  createdAt      DateTime         @default(now())
+  User           Users            @relation(fields: [userId], references: [id])
+  FeedbackImages FeedbackImages[]
+}
+
+model FeedbackImages {
+  id         Int      @id @default(autoincrement())
+  feedbackId Int
+  path       String   @db.Text
+  createdAt  DateTime @default(now())
+  Feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+}
+
+enum USER_ROLES {
+  ATHLETE
+  BUSINESS
+  ADMIN
+}
+
+enum GENDERS {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum LOGIN_METHODS {
+  EMAIL
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
+
+enum JOB_TYPE {
+  SOCIAL_MEDIA
+  MEET_AND_GREET
+  AUTOGRAPHS
+  PHOTO_SHOOTS
+  OTHER
+}
+
+enum JOB_STATUS {
+  OPEN
+  FILLED
+  COMPLETED
+}
+
+enum JOB_APPLICATION_STATUS {
+  APPLIED
+  WAITLISTED
+  REJECTED
+  HIRED
+  COMPLETED
+}
+
+enum CHAT_TYPE {
+  PRIVATE
+  GROUP
+}
+
+enum TRANSACTION_TYPE {
+  DEBIT
+  CREDIT
+}
