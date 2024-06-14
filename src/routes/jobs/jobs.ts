@@ -21,6 +21,13 @@ router.get(
   validateRequest(feedbacksValidations.getAllJobs),
   feedbacksControllers.getAllJobs
 )
+router.get(
+  '/:jobId',
+  authRequired(),
+  rolesRequired(['ATHLETE', 'BUSINESS', 'ADMIN']),
+  validateRequest(feedbacksValidations.getSingleJob),
+  feedbacksControllers.getSingleJob
+)
 router.post(
   '/banner',
   authRequired(),
@@ -35,6 +42,13 @@ router.post(
   rolesRequired(['BUSINESS']),
   validateRequest(feedbacksValidations.createJob),
   feedbacksControllers.createJob
+)
+router.post(
+  '/publish',
+  authRequired(),
+  rolesRequired(['BUSINESS']),
+  validateRequest(feedbacksValidations.publishJob),
+  feedbacksControllers.publishJob
 )
 
 export default router

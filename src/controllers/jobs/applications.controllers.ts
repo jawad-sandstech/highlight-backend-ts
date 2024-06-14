@@ -30,9 +30,9 @@ const createApplication = async (
   const { userId } = user
 
   try {
-    const existingJob = await prisma.jobs.findUnique({ where: { id: jobId } })
+    const job = await prisma.jobs.findUnique({ where: { id: jobId } })
 
-    if (existingJob === null) {
+    if (job === null) {
       const response = notFoundResponse(`job with id: ${jobId} not found.`)
       return res.status(response.status.code).json(response)
     }

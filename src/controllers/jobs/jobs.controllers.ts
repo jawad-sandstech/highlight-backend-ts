@@ -7,7 +7,8 @@ import {
   notFoundResponse,
   okResponse,
   unauthorizedResponse,
-  badRequestResponse
+  badRequestResponse,
+  updateSuccessResponse
 } from 'generic-response'
 
 import prisma from '../../config/database.config'
@@ -21,17 +22,23 @@ import type { Response } from 'express'
 type JOB_TYPE = 'SOCIAL_MEDIA' | 'MEET_AND_GREET' | 'AUTOGRAPHS' | 'PHOTO_SHOOTS' | 'OTHER'
 
 type TGetAllJobsQuery = {
-  sportIds?: number[]
-  jobType?: JOB_TYPE[]
+  businessId?: string
+  sportIds?: string | string[]
+  jobType?: JOB_TYPE | JOB_TYPE[]
   datePosted?: 'ANY_TIME' | 'PAST_24_HOURS' | 'PAST_WEEK' | 'PAST_MONTH'
   minimumCompensation?: 'NONE' | '$50' | '$100' | '$200' | '$400'
 }
 
 type TGetAllJobsWhereClause = {
-  sportId?: { in: number[] }
-  type?: { in: JOB_TYPE[] }
+  userId?: number
+  sportId?: number | { in: number[] }
+  type?: JOB_TYPE | { in: JOB_TYPE[] }
   createdAt?: { gte: Date }
   salary?: { gte: number }
+}
+
+type TGetSingleJobParams = {
+  jobId: string
 }
 
 type TCreateJobBody = {
@@ -44,12 +51,16 @@ type TCreateJobBody = {
   type: JOB_TYPE
 }
 
+type TPublishJobBody = {
+  jobId: number
+}
+
 const getAllJobs = async (
   req: AuthRequest<unknown, unknown, unknown, TGetAllJobsQuery>,
   res: Response
 ): Promise<Response> => {
   const user = req.user
-  const { sportIds, jobType, datePosted, minimumCompensation } = req.query
+  const { businessId, sportIds, jobType, datePosted, minimumCompensation } = req.query
 
   if (user === undefined) {
     const response = unauthorizedResponse()
@@ -61,12 +72,24 @@ const getAllJobs = async (
   try {
     const whereClause: TGetAllJobsWhereClause = {}
 
+    if (businessId !== undefined) {
+      whereClause.userId = Number(businessId)
+    }
+
     if (sportIds !== undefined) {
-      whereClause.sportId = { in: sportIds }
+      if (Array.isArray(sportIds)) {
+        whereClause.sportId = { in: sportIds.map((i) => Number(i)) }
+      } else {
+        whereClause.sportId = Number(sportIds)
+      }
     }
 
     if (jobType !== undefined) {
-      whereClause.type = { in: jobType }
+      if (Array.isArray(jobType)) {
+        whereClause.type = { in: jobType }
+      } else {
+        whereClause.type = jobType
+      }
     }
 
     if (datePosted !== undefined && datePosted !== 'ANY_TIME') {
@@ -77,11 +100,13 @@ const getAllJobs = async (
           gte: now.subtract(24, 'hours').toDate()
         }
       }
+
       if (datePosted === 'PAST_WEEK') {
         whereClause.createdAt = {
           gte: now.subtract(7, 'days').toDate()
         }
       }
+
       if (datePosted === 'PAST_MONTH') {
         whereClause.createdAt = {
           gte: now.subtract(1, 'month').toDate()
@@ -98,16 +123,52 @@ const getAllJobs = async (
     const jobs = await prisma.jobs.findMany({
       where: {
         ...whereClause,
+        status: 'OPEN',
         UserHiddenJobs: {
           none: {
             userId
           }
         }
       },
-      include: { JobRequiredQualifications: true }
+      include: { User: true, UserSavedJobs: { where: { userId } } }
     })
 
     const response = okResponse(jobs)
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
+const getSingleJob = async (
+  req: AuthRequest<TGetSingleJobParams>,
+  res: Response
+): Promise<Response> => {
+  const jobId = Number(req.params.jobId)
+
+  try {
+    const job = await prisma.jobs.findUnique({
+      where: { id: jobId },
+      include: {
+        User: true,
+        Sport: true,
+        JobRequiredQualifications: true
+      }
+    })
+
+    if (job === null) {
+      const response = notFoundResponse('job not found')
+      return res.status(response.status.code).json(response)
+    }
+
+    const response = okResponse({ job })
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
@@ -200,7 +261,7 @@ const createJob = async (
           userId,
           amount: data.salary,
           transactionType: 'DEBIT',
-          sourceId: job.id
+          source: { recourseType: 'JOB', recourseId: job.id }
         }
       })
 
@@ -230,8 +291,80 @@ const createJob = async (
   }
 }
 
+const publishJob = async (
+  req: AuthRequest<unknown, unknown, TPublishJobBody>,
+  res: Response
+): Promise<Response> => {
+  const user = req.user
+  const { jobId } = req.body
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    const job = await prisma.jobs.findUnique({
+      where: { id: jobId }
+    })
+
+    if (job === null) {
+      const response = notFoundResponse(`job with id: ${jobId} not found`)
+      return res.status(response.status.code).json(response)
+    }
+
+    if (job.userId !== userId) {
+      const response = unauthorizedResponse('not yours')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (job.hasPaid) {
+      const response = badRequestResponse('already published')
+      return res.status(response.status.code).json(response)
+    }
+
+    const transactions = await prisma.userWallet.findMany({ where: { userId } })
+    const walletBalance = calculateWalletBalance(transactions)
+
+    if (walletBalance >= job.salary) {
+      await prisma.userWallet.create({
+        data: {
+          userId,
+          amount: job.salary,
+          transactionType: 'DEBIT',
+          source: { recourseType: 'JOB', recourseId: job.id }
+        }
+      })
+
+      await prisma.jobs.update({
+        where: { id: job.id },
+        data: { hasPaid: true }
+      })
+
+      const response = updateSuccessResponse()
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = okResponse('cannot be published due to insufficient funds')
+      return res.status(response.status.code).json(response)
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
 export default {
   getAllJobs,
+  getSingleJob,
   uploadJobBanner,
-  createJob
+  createJob,
+  publishJob
 }

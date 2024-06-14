@@ -134,11 +134,10 @@ model UserWallet {
   userId          Int
   amount          Int
   transactionType TRANSACTION_TYPE
-  sourceId        Int?
+  source          Json?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   User            Users            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Source          Jobs?            @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 }
 
 model Sports {
@@ -146,29 +145,30 @@ model Sports {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Jobs      Jobs[]
 }
 
 model Jobs {
   id                        Int                         @id @default(autoincrement())
   userId                    Int
+  sportId                   Int?
   title                     String                      @db.Text
   description               String                      @db.Text
   bannerImage               String                      @db.Text
   salary                    Int
-  sportId                   Int
   type                      JOB_TYPE
   status                    JOB_STATUS                  @default(OPEN)
   hasPaid                   Boolean                     @default(false)
   createdAt                 DateTime                    @default(now())
   updatedAt                 DateTime                    @updatedAt
   User                      Users                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Sport                     Sports?                     @relation(fields: [sportId], references: [id])
   JobRequiredQualifications JobRequiredQualifications[]
   UserSavedJobs             UserSavedJobs[]
   UserHiddenJobs            UserHiddenJobs[]
   JobApplications           JobApplications[]
   ReportedJobs              ReportedJobs[]
   UserSchedules             UserSchedules[]
-  UserWallet                UserWallet[]
 }
 
 model JobApplications {
@@ -349,7 +349,7 @@ enum JOB_STATUS {
 
 enum JOB_APPLICATION_STATUS {
   APPLIED
-  WAITLISTED
+  WAIT_LISTED
   REJECTED
   HIRED
   COMPLETED

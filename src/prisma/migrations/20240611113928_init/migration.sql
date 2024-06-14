@@ -1,19 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the `todo` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `user` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropForeignKey
-ALTER TABLE `todo` DROP FOREIGN KEY `Todo_userId_fkey`;
-
--- DropTable
-DROP TABLE `todo`;
-
--- DropTable
-DROP TABLE `user`;
-
 -- CreateTable
 CREATE TABLE `Users` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
@@ -29,7 +13,7 @@ CREATE TABLE `Users` (
     `role` ENUM('ATHLETE', 'BUSINESS', 'ADMIN') NOT NULL,
     `loginMethod` ENUM('EMAIL', 'GOOGLE', 'FACEBOOK', 'APPLE') NOT NULL,
     `socialToken` VARCHAR(191) NULL,
-    `email` VARCHAR(191) NULL,
+    `email` VARCHAR(191) NOT NULL,
     `stripeCustomerId` VARCHAR(191) NOT NULL,
     `stripeAccountId` VARCHAR(191) NULL,
     `isEmailVerified` BOOLEAN NOT NULL DEFAULT false,
@@ -39,6 +23,7 @@ CREATE TABLE `Users` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `Users_email_key`(`email`),
     UNIQUE INDEX `Users_stripeCustomerId_key`(`stripeCustomerId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -65,13 +50,13 @@ CREATE TABLE `AthleteInfo` (
 CREATE TABLE `BusinessInfo` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
-    `organizationName` VARCHAR(191) NOT NULL,
-    `industryType` VARCHAR(191) NOT NULL,
-    `founded` VARCHAR(191) NOT NULL,
-    `overview` TEXT NOT NULL,
-    `phoneNumber` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191) NOT NULL,
-    `website` VARCHAR(191) NOT NULL,
+    `organizationName` VARCHAR(191) NULL,
+    `industryType` VARCHAR(191) NULL,
+    `founded` VARCHAR(191) NULL,
+    `overview` TEXT NULL,
+    `phoneNumber` VARCHAR(191) NULL,
+    `email` VARCHAR(191) NULL,
+    `website` VARCHAR(191) NULL,
     `isPremium` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -159,7 +144,7 @@ CREATE TABLE `Jobs` (
     `bannerImage` TEXT NOT NULL,
     `salary` INTEGER NOT NULL,
     `sportId` INTEGER NOT NULL,
-    `type` ENUM('SOCIAL_MEDIA', 'MEET_AND_GREET', 'AUTOGRAPHS', 'PHOTOSHOOTS', 'OTHER') NOT NULL,
+    `type` ENUM('SOCIAL_MEDIA', 'MEET_AND_GREET', 'AUTOGRAPHS', 'PHOTO_SHOOTS', 'OTHER') NOT NULL,
     `status` ENUM('OPEN', 'FILLED', 'COMPLETED') NOT NULL DEFAULT 'OPEN',
     `hasPaid` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

@@ -7,7 +7,7 @@ import validateRequest from '../../middlewares/validateRequest.middleware'
 import jobsValidations from '../../validations/businesses/jobs'
 import jobsControllers from '../../controllers/businesses/jobs.controllers'
 
-const router = express.Router({ mergeParams: true })
+const router = express.Router()
 
 router.get(
   '/',

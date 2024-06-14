@@ -144,6 +144,8 @@ const login = async (
     if (loginData.loginMethod === 'EMAIL') {
       const { role, email, password } = loginData
 
+      console.log({ role, email, password })
+
       const user = await prisma.users.findFirst({
         where: { role, email },
         include: {
@@ -162,10 +164,6 @@ const login = async (
         const response = unauthorizedResponse('incorrect email or password')
         return res.status(response.status.code).json(response)
       }
-
-      console.log(user?.UserPasswords[0].password)
-      console.log(password)
-      console.log(user?.UserPasswords[0].password === password)
 
       if (user?.UserPasswords[0].password !== password) {
         const response = unauthorizedResponse('incorrect email or password')

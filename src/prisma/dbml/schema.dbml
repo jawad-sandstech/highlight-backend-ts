@@ -121,11 +121,10 @@ Table UserWallet {
   userId Int [not null]
   amount Int [not null]
   transactionType TRANSACTION_TYPE [not null]
-  sourceId Int
+  source Json
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   User Users [not null]
-  Source Jobs
 }
 
 Table Sports {
@@ -133,29 +132,30 @@ Table Sports {
   name String [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
+  Jobs Jobs [not null]
 }
 
 Table Jobs {
   id Int [pk, increment]
   userId Int [not null]
+  sportId Int
   title String [not null]
   description String [not null]
   bannerImage String [not null]
   salary Int [not null]
-  sportId Int [not null]
   type JOB_TYPE [not null]
   status JOB_STATUS [not null, default: 'OPEN']
   hasPaid Boolean [not null, default: false]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   User Users [not null]
+  Sport Sports
   JobRequiredQualifications JobRequiredQualifications [not null]
   UserSavedJobs UserSavedJobs [not null]
   UserHiddenJobs UserHiddenJobs [not null]
   JobApplications JobApplications [not null]
   ReportedJobs ReportedJobs [not null]
   UserSchedules UserSchedules [not null]
-  UserWallet UserWallet [not null]
 }
 
 Table JobApplications {
@@ -336,7 +336,7 @@ Enum JOB_STATUS {
 
 Enum JOB_APPLICATION_STATUS {
   APPLIED
-  WAITLISTED
+  WAIT_LISTED
   REJECTED
   HIRED
   COMPLETED
@@ -366,9 +366,9 @@ Ref: UserGallery.userId > Users.id [delete: Cascade]
 
 Ref: UserWallet.userId > Users.id [delete: Cascade]
 
-Ref: UserWallet.sourceId > Jobs.id [delete: Cascade]
-
 Ref: Jobs.userId > Users.id [delete: Cascade]
+
+Ref: Jobs.sportId > Sports.id
 
 Ref: JobApplications.jobId > Jobs.id [delete: Cascade]
 

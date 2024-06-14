@@ -14,6 +14,7 @@ const login = Joi.object({
   query: Joi.object({}),
   params: Joi.object({}),
   body: Joi.object({
+    role: Joi.string().valid('ATHLETE', 'BUSINESS').required(),
     loginMethod: Joi.string().valid('EMAIL', 'GOOGLE', 'FACEBOOK', 'APPLE').required(),
     email: Joi.string().email().when('loginMethod', {
       is: 'EMAIL',

@@ -1,4 +1,9 @@
-import { notFoundResponse, okResponse, serverErrorResponse } from 'generic-response'
+import {
+  notFoundResponse,
+  okResponse,
+  serverErrorResponse,
+  unauthorizedResponse
+} from 'generic-response'
 import multiGroupBy from 'multi-groupby'
 
 import prisma from '../../config/database.config'
@@ -8,19 +13,19 @@ import type { Jobs } from '@prisma/client'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
 
-type TGetAllJobsOfBusinessParams = {
-  businessId: string
-}
+const getAllJobsOfBusiness = async (req: AuthRequest, res: Response): Promise<Response> => {
+  const user = req.user
 
-const getAllJobsOfBusiness = async (
-  req: AuthRequest<TGetAllJobsOfBusinessParams>,
-  res: Response
-): Promise<Response> => {
-  const businessId = Number(req.params.businessId)
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
 
   try {
     const business = await prisma.users.findUnique({
-      where: { id: businessId }
+      where: { id: userId }
     })
 
     if (business === null) {
@@ -29,7 +34,7 @@ const getAllJobsOfBusiness = async (
     }
 
     const jobs = await prisma.jobs.findMany({
-      where: { userId: businessId },
+      where: { userId },
       include: { JobRequiredQualifications: true }
     })
 

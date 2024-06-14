@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stripe Payment Test</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .container {
+        width: 300px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Stripe Payment Test</h2>
+      <form id="payment-form">
+        <label for="client-secret">Client Secret:</label>
+        <input type="text" id="client-secret" name="client-secret" required />
+        <br /><br />
+        <label for="card-element">Credit or Debit Card:</label>
+        <div id="card-element"></div>
+        <br />
+        <button id="submit-button" type="submit">Pay</button>
+      </form>
+      <div id="payment-result" class="hidden"></div>
+    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const stripe = Stripe(
+          'pk_test_51PIVq9CuPDpzvWxoTisGMf02ApKk6Eq8avPT7nrqN4OQBdOTqeqaDI4ilXEPLPvEa5y6V70kjUFWY8H7acOKdDPT00KKIJ3wU1'
+        )
+
+        const elements = stripe.elements()
+        const cardElement = elements.create('card')
+        cardElement.mount('#card-element')
+
+        const form = document.getElementById('payment-form')
+        const paymentResult = document.getElementById('payment-result')
+        const submitButton = document.getElementById('submit-button')
+
+        form.addEventListener('submit', async function (event) {
+          event.preventDefault()
+          submitButton.disabled = true
+
+          const clientSecret = document.getElementById('client-secret').value
+
+          const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+              card: cardElement,
+              billing_details: {
+                name: 'Test User'
+              }
+            }
+          })
+
+          if (error) {
+            paymentResult.textContent = `Payment failed: ${error.message}`
+            paymentResult.classList.remove('hidden')
+            submitButton.disabled = false
+          } else if (paymentIntent.status === 'succeeded') {
+            paymentResult.textContent = 'Payment succeeded!'
+            paymentResult.classList.remove('hidden')
+          }
+        })
+      })
+    </script>
+  </body>
+</html>

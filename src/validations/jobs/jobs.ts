@@ -2,12 +2,25 @@ import Joi from 'joi'
 
 const getAllJobs = Joi.object({
   query: Joi.object({
-    sportIds: Joi.array().items(Joi.number()).unique().optional(),
-    jobType: Joi.array()
-      .items(
-        Joi.string().valid('SOCIAL_MEDIA', 'MEET_AND_GREET', 'AUTOGRAPHS', 'PHOTO_SHOOTS', 'OTHER')
+    businessId: Joi.number().optional(),
+    sportIds: Joi.alternatives()
+      .try(Joi.number(), Joi.array().items(Joi.number()).unique())
+      .optional(),
+    jobType: Joi.alternatives()
+      .try(
+        Joi.string().valid('SOCIAL_MEDIA', 'MEET_AND_GREET', 'AUTOGRAPHS', 'PHOTO_SHOOTS', 'OTHER'),
+        Joi.array()
+          .items(
+            Joi.string().valid(
+              'SOCIAL_MEDIA',
+              'MEET_AND_GREET',
+              'AUTOGRAPHS',
+              'PHOTO_SHOOTS',
+              'OTHER'
+            )
+          )
+          .unique()
       )
-      .unique()
       .optional(),
     datePosted: Joi.string()
       .valid('ANY_TIME', 'PAST_24_HOURS', 'PAST_WEEK', 'PAST_MONTH')
@@ -15,6 +28,14 @@ const getAllJobs = Joi.object({
     minimumCompensation: Joi.string().valid('NONE', '$50', '$100', '$200', '$400').optional()
   }),
   params: Joi.object({}),
+  body: Joi.object({})
+})
+
+const getSingleJob = Joi.object({
+  query: Joi.object({}),
+  params: Joi.object({
+    jobId: Joi.number().required()
+  }),
   body: Joi.object({})
 })
 
@@ -40,8 +61,18 @@ const createJob = Joi.object({
   })
 })
 
+const publishJob = Joi.object({
+  query: Joi.object({}),
+  params: Joi.object({}),
+  body: Joi.object({
+    jobId: Joi.number().required()
+  })
+})
+
 export default {
   getAllJobs,
+  getSingleJob,
   uploadJobBanner,
-  createJob
+  createJob,
+  publishJob
 }
