@@ -101,7 +101,7 @@ const getMyTransactions = async (req: AuthRequest, res: Response): Promise<Respo
     return res.status(response.status.code).json(response)
   }
 
-  const { userId, role } = user
+  const { userId } = user
 
   try {
     const user = await prisma.users.findUnique({
@@ -113,16 +113,9 @@ const getMyTransactions = async (req: AuthRequest, res: Response): Promise<Respo
       return res.status(response.status.code).json(response)
     }
 
-    const transactions = await prisma.transactions.findMany({
-      where: { userId },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+    const { walletBalance, transactions } = await calculateWalletBalance(userId)
 
-    const balance = calculateWalletBalance(transactions, role)
-
-    const response = okResponse({ balance, transactions })
+    const response = okResponse({ walletBalance, transactions })
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
@@ -183,7 +176,7 @@ const withdraw = async (
     return res.status(response.status.code).json(response)
   }
 
-  const { userId, role } = user
+  const { userId } = user
 
   try {
     const user = await prisma.users.findUnique({
@@ -205,16 +198,9 @@ const withdraw = async (
       return res.status(response.status.code).json(response)
     }
 
-    const transactions = await prisma.transactions.findMany({
-      where: { userId },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
+    const { walletBalance } = await calculateWalletBalance(userId)
 
-    const balance = calculateWalletBalance(transactions, role)
-
-    if (balance < withdrawAmount) {
+    if (walletBalance < withdrawAmount) {
       const response = badRequestResponse('Not enough funds')
       return res.status(response.status.code).json(response)
     }
@@ -225,8 +211,8 @@ const withdraw = async (
     await prisma.transactions.create({
       data: {
         userId,
-        transactionType: 'WITHDRAWAL',
-        amount: withdrawAmount
+        amount: withdrawAmount,
+        transactionType: 'WITHDRAWAL'
       }
     })
 

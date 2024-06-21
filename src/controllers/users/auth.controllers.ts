@@ -14,17 +14,18 @@ import prisma from '../../config/database.config'
 
 import userService from '../../services/user.service'
 
+import type { USER_ROLES } from '@prisma/client'
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
 
 type TRegisterBody = {
-  role: 'ATHLETE' | 'BUSINESS'
+  role: USER_ROLES
   email: string
   password: string
 }
 
 type TLoginBody = {
-  role: 'ATHLETE' | 'BUSINESS'
+  role: USER_ROLES
 } & (
   | {
       loginMethod: 'EMAIL'
@@ -143,8 +144,6 @@ const login = async (
   try {
     if (loginData.loginMethod === 'EMAIL') {
       const { role, email, password } = loginData
-
-      console.log({ role, email, password })
 
       const user = await prisma.users.findFirst({
         where: { role, email },

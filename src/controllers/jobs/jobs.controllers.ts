@@ -267,8 +267,7 @@ const createJob = async (
       return res.status(response.status.code).json(response)
     }
 
-    const transactions = await prisma.transactions.findMany({ where: { userId } })
-    const walletBalance = calculateWalletBalance(transactions, 'BUSINESS')
+    const { walletBalance } = await calculateWalletBalance(userId)
 
     const platformFees = (data.salary * config.PLATFORM_FEE_PERCENTAGE) / 100
 
@@ -362,8 +361,7 @@ const publishJob = async (
       return res.status(response.status.code).json(response)
     }
 
-    const transactions = await prisma.transactions.findMany({ where: { userId } })
-    const walletBalance = calculateWalletBalance(transactions, 'BUSINESS')
+    const { walletBalance } = await calculateWalletBalance(userId)
 
     const platformFees = (job.salary * config.PLATFORM_FEE_PERCENTAGE) / 100
 

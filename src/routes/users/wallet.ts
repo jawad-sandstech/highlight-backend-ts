@@ -12,7 +12,7 @@ const router = express.Router()
 router.get(
   '/',
   authRequired(),
-  rolesRequired(['ATHLETE', 'BUSINESS']),
+  rolesRequired(['ATHLETE', 'BUSINESS', 'ADMIN']),
   validateRequest(walletValidations.getMyTransactions),
   walletControllers.getMyTransactions
 )

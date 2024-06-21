@@ -1,10 +1,10 @@
 import prisma from '../config/database.config'
 import stripe from '../config/stripe.config'
 
-import type { Users } from '@prisma/client'
+import type { USER_ROLES, Users } from '@prisma/client'
 
 type TCreateUser = {
-  role: 'ATHLETE' | 'BUSINESS'
+  role: USER_ROLES
 } & (
   | {
       loginMethod: 'EMAIL'
@@ -66,6 +66,16 @@ const createUser = async (data: TCreateUser): Promise<Users> => {
       await prisma.userPreference.create({
         data: { userId: user.id }
       })
+
+      if (role === 'ATHLETE') {
+        await prisma.athleteInfo.create({
+          data: { userId: user.id }
+        })
+      } else {
+        await prisma.businessInfo.create({
+          data: { userId: user.id }
+        })
+      }
 
       return user
       // else if (

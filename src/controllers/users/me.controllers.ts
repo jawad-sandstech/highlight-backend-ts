@@ -297,17 +297,27 @@ const updateAthleteInfo = async (
   req: AuthRequest<unknown, unknown, TUpdateAthleteInfoBody>,
   res: Response
 ): Promise<Response> => {
-  const user = req.user
+  const authenticatedUser = req.user
   const { athleticAchievements, gallery, ...data } = req.body
 
-  if (user === undefined) {
+  if (authenticatedUser === undefined) {
     const response = unauthorizedResponse()
     return res.status(response.status.code).json(response)
   }
 
-  const { userId } = user
+  const { userId } = authenticatedUser
 
   try {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: { AthleteInfo: true }
+    })
+
+    if (user === null) {
+      const response = unauthorizedResponse()
+      return res.status(response.status.code).json(response)
+    }
+
     const existingSport = await prisma.sports.findUnique({ where: { id: data.sportId } })
 
     if (existingSport == null) {
@@ -315,7 +325,8 @@ const updateAthleteInfo = async (
       return res.status(response.status.code).json(response)
     }
 
-    await prisma.athleteInfo.create({
+    await prisma.athleteInfo.update({
+      where: { id: user.AthleteInfo?.id },
       data: {
         userId,
         ...data
@@ -352,18 +363,29 @@ const updateBusinessInfo = async (
   req: AuthRequest<unknown, unknown, TUpdateBusinessInfoBody>,
   res: Response
 ): Promise<Response> => {
-  const user = req.user
+  const authenticatedUser = req.user
   const data = req.body
 
-  if (user === undefined) {
+  if (authenticatedUser === undefined) {
     const response = unauthorizedResponse()
     return res.status(response.status.code).json(response)
   }
 
-  const { userId } = user
+  const { userId } = authenticatedUser
 
   try {
-    await prisma.businessInfo.create({
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: { BusinessInfo: true }
+    })
+
+    if (user === null) {
+      const response = unauthorizedResponse()
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.businessInfo.update({
+      where: { id: user.BusinessInfo?.id },
       data: {
         userId,
         ...data

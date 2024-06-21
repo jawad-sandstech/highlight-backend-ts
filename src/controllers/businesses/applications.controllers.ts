@@ -173,12 +173,14 @@ const updateStatusOfApplications = async (
         }
       })
 
+      console.log(application.jobId)
+
       await prisma.transactions.updateMany({
         where: {
           transactionType: 'HOLD',
           source: {
             path: '$.recourseId',
-            equals: String(application.jobId)
+            equals: application.jobId
           }
         },
         data: { transactionType: 'PAYMENT' }
