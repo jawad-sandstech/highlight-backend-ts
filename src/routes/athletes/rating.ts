@@ -4,24 +4,24 @@ import authRequired from '../../middlewares/authRequired.middleware'
 import rolesRequired from '../../middlewares/rolesRequired.middleware'
 import validateRequest from '../../middlewares/validateRequest.middleware'
 
-import applicationValidations from '../../validations/athletes/applications'
-import applicationControllers from '../../controllers/athletes/applications.controllers'
+import rateValidations from '../../validations/athletes/rate'
+import rateControllers from '../../controllers/athletes/rate.controllers'
 
 const router = express.Router({ mergeParams: true })
 
 router.get(
   '/',
   authRequired(),
-  rolesRequired(['ATHLETE']),
-  validateRequest(applicationValidations.getMyApplications),
-  applicationControllers.getMyApplications
+  rolesRequired(['ATHLETE', 'BUSINESS']),
+  validateRequest(rateValidations.getAllAthleteRatings),
+  rateControllers.getAllAthleteRatings
 )
 router.post(
   '/',
   authRequired(),
   rolesRequired(['ATHLETE']),
-  validateRequest(applicationValidations.createApplication),
-  applicationControllers.createApplication
+  validateRequest(rateValidations.giveRating),
+  rateControllers.giveRating
 )
 
 export default router

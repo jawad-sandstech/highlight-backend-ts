@@ -1,10 +1,10 @@
 import {
-  badRequestResponse,
-  createSuccessResponse,
-  notFoundResponse,
-  okResponse,
   serverErrorResponse,
-  unauthorizedResponse
+  unauthorizedResponse,
+  okResponse,
+  notFoundResponse,
+  badRequestResponse,
+  updateSuccessResponse
 } from 'generic-response'
 
 import prisma from '../../config/database.config'
@@ -12,11 +12,11 @@ import prisma from '../../config/database.config'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
 
-type TCreateApplicationBody = {
-  jobId: number
+type TCompleteOngoingJobParams = {
+  jobId: string
 }
 
-const getMyApplications = async (req: AuthRequest, res: Response): Promise<Response> => {
+const getAllOngoingJobs = async (req: AuthRequest, res: Response): Promise<Response> => {
   const user = req.user
 
   if (user === undefined) {
@@ -27,18 +27,11 @@ const getMyApplications = async (req: AuthRequest, res: Response): Promise<Respo
   const { userId } = user
 
   try {
-    const jobApplications = await prisma.jobApplications.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        userId: true,
-        createdAt: true,
-        updatedAt: true,
-        Job: true
-      }
+    const ongoingJobs = await prisma.jobApplications.findMany({
+      where: { userId, status: 'HIRED' }
     })
 
-    const response = okResponse(jobApplications)
+    const response = okResponse(ongoingJobs)
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
@@ -52,12 +45,12 @@ const getMyApplications = async (req: AuthRequest, res: Response): Promise<Respo
   }
 }
 
-const createApplication = async (
-  req: AuthRequest<unknown, unknown, TCreateApplicationBody>,
+const completeOngoingJob = async (
+  req: AuthRequest<TCompleteOngoingJobParams>,
   res: Response
 ): Promise<Response> => {
   const user = req.user
-  const { jobId } = req.body
+  const jobId = Number(req.params.jobId)
 
   if (user === undefined) {
     const response = unauthorizedResponse()
@@ -67,27 +60,34 @@ const createApplication = async (
   const { userId } = user
 
   try {
-    const job = await prisma.jobs.findUnique({ where: { id: jobId } })
+    const job = await prisma.jobs.findUnique({
+      where: { id: jobId },
+      include: { JobApplications: true }
+    })
 
     if (job === null) {
-      const response = notFoundResponse(`job with id: ${jobId} not found.`)
+      const response = notFoundResponse('not found')
       return res.status(response.status.code).json(response)
     }
 
-    const existingApplication = await prisma.jobApplications.findFirst({
-      where: { userId, jobId }
-    })
+    const application = job?.JobApplications[0]
 
-    if (existingApplication !== null) {
-      const response = badRequestResponse('already applied to this job')
+    if (application.userId !== userId) {
+      const response = unauthorizedResponse('not found')
       return res.status(response.status.code).json(response)
     }
 
-    const application = await prisma.jobApplications.create({
-      data: { userId, jobId }
+    if (application.status !== 'HIRED') {
+      const response = badRequestResponse('cannot mark as complete')
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.jobs.update({
+      where: { id: jobId },
+      data: { hasCompletedByAthlete: true }
     })
 
-    const response = createSuccessResponse(application)
+    const response = updateSuccessResponse()
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
@@ -102,6 +102,6 @@ const createApplication = async (
 }
 
 export default {
-  getMyApplications,
-  createApplication
+  getAllOngoingJobs,
+  completeOngoingJob
 }

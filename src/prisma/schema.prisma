@@ -57,6 +57,8 @@ model Users {
   Feedback                 Feedback[]
   FavoriteBusinesses       UserFavoriteBusinesses[]   @relation("Business")
   BusinessesFavoritedBy    UserFavoriteBusinesses[]   @relation("User")
+  GivenRatings             UserRating[]               @relation("Business")
+  RecivedRatings           UserRating[]               @relation("Athlete")
 }
 
 model AthleteInfo {
@@ -129,6 +131,19 @@ model UserGallery {
   User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model UserRating {
+  id         Int      @id @default(autoincrement())
+  jobId      Int
+  athleteId  Int
+  businessId Int?
+  rating     Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  Job        Jobs?    @relation(fields: [jobId], references: [id])
+  Athlete    Users    @relation(name: "Athlete", fields: [athleteId], references: [id], onDelete: Cascade)
+  Business   Users?   @relation(name: "Business", fields: [businessId], references: [id])
+}
+
 model UserWallet {
   id              Int              @id @default(autoincrement())
   userId          Int
@@ -158,6 +173,7 @@ model Jobs {
   salary                    Int
   type                      JOB_TYPE
   status                    JOB_STATUS                  @default(OPEN)
+  hasCompletedByAthlete     Boolean                     @default(false)
   hasPaid                   Boolean                     @default(false)
   createdAt                 DateTime                    @default(now())
   updatedAt                 DateTime                    @updatedAt
@@ -169,6 +185,7 @@ model Jobs {
   JobApplications           JobApplications[]
   ReportedJobs              ReportedJobs[]
   UserSchedules             UserSchedules[]
+  UserRating                UserRating[]
 }
 
 model JobApplications {

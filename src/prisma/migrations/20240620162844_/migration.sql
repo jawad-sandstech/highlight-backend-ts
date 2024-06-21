@@ -113,12 +113,25 @@ CREATE TABLE `UserGallery` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `UserRating` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `jobId` INTEGER NOT NULL,
+    `athleteId` INTEGER NOT NULL,
+    `businessId` INTEGER NULL,
+    `rating` INTEGER NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `UserWallet` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
     `amount` INTEGER NOT NULL,
     `transactionType` ENUM('DEBIT', 'CREDIT') NOT NULL,
-    `sourceId` INTEGER NULL,
+    `source` JSON NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -139,13 +152,14 @@ CREATE TABLE `Sports` (
 CREATE TABLE `Jobs` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
+    `sportId` INTEGER NULL,
     `title` TEXT NOT NULL,
     `description` TEXT NOT NULL,
     `bannerImage` TEXT NOT NULL,
     `salary` INTEGER NOT NULL,
-    `sportId` INTEGER NOT NULL,
     `type` ENUM('SOCIAL_MEDIA', 'MEET_AND_GREET', 'AUTOGRAPHS', 'PHOTO_SHOOTS', 'OTHER') NOT NULL,
     `status` ENUM('OPEN', 'FILLED', 'COMPLETED') NOT NULL DEFAULT 'OPEN',
+    `hasCompletedByAthlete` BOOLEAN NOT NULL DEFAULT false,
     `hasPaid` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -158,7 +172,7 @@ CREATE TABLE `JobApplications` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `jobId` INTEGER NOT NULL,
     `userId` INTEGER NOT NULL,
-    `status` ENUM('APPLIED', 'WAITLISTED', 'REJECTED', 'HIRED', 'COMPLETED') NOT NULL DEFAULT 'APPLIED',
+    `status` ENUM('APPLIED', 'WAIT_LISTED', 'REJECTED', 'HIRED', 'COMPLETED') NOT NULL DEFAULT 'APPLIED',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -337,13 +351,22 @@ ALTER TABLE `UserAthleticAchievements` ADD CONSTRAINT `UserAthleticAchievements_
 ALTER TABLE `UserGallery` ADD CONSTRAINT `UserGallery_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `UserRating` ADD CONSTRAINT `UserRating_jobId_fkey` FOREIGN KEY (`jobId`) REFERENCES `Jobs`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UserRating` ADD CONSTRAINT `UserRating_athleteId_fkey` FOREIGN KEY (`athleteId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UserRating` ADD CONSTRAINT `UserRating_businessId_fkey` FOREIGN KEY (`businessId`) REFERENCES `Users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `UserWallet` ADD CONSTRAINT `UserWallet_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `UserWallet` ADD CONSTRAINT `UserWallet_sourceId_fkey` FOREIGN KEY (`sourceId`) REFERENCES `Jobs`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `Jobs` ADD CONSTRAINT `Jobs_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Jobs` ADD CONSTRAINT `Jobs_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `Jobs` ADD CONSTRAINT `Jobs_sportId_fkey` FOREIGN KEY (`sportId`) REFERENCES `Sports`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `JobApplications` ADD CONSTRAINT `JobApplications_jobId_fkey` FOREIGN KEY (`jobId`) REFERENCES `Jobs`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

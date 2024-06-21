@@ -4,7 +4,8 @@ import {
   createSuccessResponse,
   notFoundResponse,
   badRequestResponse,
-  unauthorizedResponse
+  unauthorizedResponse,
+  deleteSuccessResponse
 } from 'generic-response'
 
 import prisma from '../../config/database.config'
@@ -14,6 +15,10 @@ import type { Response } from 'express'
 
 type TSavedJobsBody = {
   jobId: number
+}
+
+type TDeleteSavedJobParams = {
+  savedJobId: number
 }
 
 const getMySavedJobs = async (req: AuthRequest, res: Response): Promise<Response> => {
@@ -46,7 +51,7 @@ const getMySavedJobs = async (req: AuthRequest, res: Response): Promise<Response
   }
 }
 
-const savedJobs = async (
+const savedJob = async (
   req: AuthRequest<unknown, unknown, TSavedJobsBody>,
   res: Response
 ): Promise<Response> => {
@@ -95,7 +100,50 @@ const savedJobs = async (
   }
 }
 
+const deleteSavedJob = async (
+  req: AuthRequest<TDeleteSavedJobParams>,
+  res: Response
+): Promise<Response> => {
+  const user = req.user
+  const savedJobId = Number(req.params.savedJobId)
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    const savedJob = await prisma.userSavedJobs.findFirst({
+      where: { id: savedJobId, userId }
+    })
+
+    if (savedJob === null) {
+      const response = notFoundResponse('not found')
+      return res.status(response.status.code).json(response)
+    }
+
+    const deletedSavedJob = await prisma.userSavedJobs.delete({
+      where: { id: savedJobId }
+    })
+
+    const response = deleteSuccessResponse(deletedSavedJob)
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
 export default {
   getMySavedJobs,
-  savedJobs
+  savedJob,
+  deleteSavedJob
 }

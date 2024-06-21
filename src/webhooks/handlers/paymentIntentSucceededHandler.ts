@@ -10,7 +10,13 @@ const handleDeposit = async (paymentIntent: Stripe.PaymentIntent): Promise<void>
 
   const { userId, amount } = paymentIntent.metadata as TMetadata
 
-  console.log('handleDeposit', { userId, amount })
+  await prisma.userWallet.create({
+    data: {
+      userId: Number(userId),
+      amount: Number(amount),
+      transactionType: 'CREDIT'
+    }
+  })
 
   await prisma.userWallet.create({
     data: {

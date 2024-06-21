@@ -4,17 +4,17 @@ import authRequired from '../../middlewares/authRequired.middleware'
 import rolesRequired from '../../middlewares/rolesRequired.middleware'
 import validateRequest from '../../middlewares/validateRequest.middleware'
 
-import applicationsValidations from '../../validations/jobs/applications'
-import applicationsControllers from '../../controllers/jobs/applications.controllers'
+import closedJobsValidations from '../../validations/athletes/closedJobs'
+import closedJobsControllers from '../../controllers/athletes/closedJobs.controllers'
 
-const router = express.Router()
+const router = express.Router({ mergeParams: true })
 
-router.post(
+router.get(
   '/',
   authRequired(),
   rolesRequired(['ATHLETE']),
-  validateRequest(applicationsValidations.createApplication),
-  applicationsControllers.createApplication
+  validateRequest(closedJobsValidations.getAllClosedJobs),
+  closedJobsControllers.getAllClosedJobs
 )
 
 export default router

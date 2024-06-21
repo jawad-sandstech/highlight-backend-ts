@@ -20,8 +20,15 @@ router.post(
   '/',
   authRequired(),
   rolesRequired(['ATHLETE']),
-  validateRequest(savedJobsValidations.savedJobs),
-  savedJobsControllers.savedJobs
+  validateRequest(savedJobsValidations.savedJob),
+  savedJobsControllers.savedJob
+)
+router.delete(
+  '/:savedJobId',
+  authRequired(),
+  rolesRequired(['ATHLETE']),
+  validateRequest(savedJobsValidations.deleteSavedJob),
+  savedJobsControllers.deleteSavedJob
 )
 
 export default router

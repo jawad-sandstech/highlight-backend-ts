@@ -1,4 +1,5 @@
 import {
+  badRequestResponse,
   notFoundResponse,
   okResponse,
   serverErrorResponse,
@@ -28,7 +29,7 @@ type TUpdateStatusOfApplicationsParams = {
 }
 
 type TUpdateStatusOfApplicationsBody = {
-  status: JOB_APPLICATION_STATUS
+  status: Exclude<JOB_APPLICATION_STATUS, 'APPLIED'>
 }
 
 const getAllApplications = async (
@@ -105,6 +106,9 @@ const updateStatusOfApplications = async (
         Job: {
           userId
         }
+      },
+      include: {
+        Job: true
       }
     })
 
@@ -113,16 +117,59 @@ const updateStatusOfApplications = async (
       return res.status(response.status.code).json(response)
     }
 
-    await prisma.jobApplications.update({
-      where: { id: application.id },
-      data: { status }
-    })
+    if (status === 'REJECTED') {
+      if (application.status !== 'APPLIED') {
+        const response = badRequestResponse('cannot change status')
+        return res.status(response.status.code).json(response)
+      }
+
+      await prisma.jobApplications.update({
+        where: { id: application.id },
+        data: { status }
+      })
+    }
+
+    if (status === 'WAIT_LISTED') {
+      if (application.status !== 'APPLIED') {
+        const response = badRequestResponse('cannot change status')
+        return res.status(response.status.code).json(response)
+      }
+
+      await prisma.jobApplications.update({
+        where: { id: application.id },
+        data: { status }
+      })
+    }
+
+    if (status === 'HIRED') {
+      if (application.status !== 'APPLIED' && application.status !== 'WAIT_LISTED') {
+        const response = badRequestResponse('cannot change status')
+        return res.status(response.status.code).json(response)
+      }
+
+      await prisma.jobApplications.update({
+        where: { id: application.id },
+        data: { status }
+      })
+    }
 
     if (status === 'COMPLETED') {
+      if (application.status !== 'HIRED') {
+        const response = badRequestResponse('cannot change status')
+        return res.status(response.status.code).json(response)
+      }
+
+      await prisma.jobApplications.update({
+        where: { id: application.id },
+        data: { status }
+      })
+
       await prisma.jobs.update({
         where: { id: application.jobId },
         data: {
-          status: 'COMPLETED'
+          hasCompletedByAthlete: true,
+          status: 'COMPLETED',
+          hasPaid: true
         }
       })
     }

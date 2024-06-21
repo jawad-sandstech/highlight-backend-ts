@@ -1,20 +1,20 @@
 import Joi from 'joi'
 
-const getMyApplications = Joi.object({
+const getAllOngoingJobs = Joi.object({
   query: Joi.object({}),
   params: Joi.object({}),
   body: Joi.object({})
 })
 
-const createApplication = Joi.object({
+const completeOngoingJob = Joi.object({
   query: Joi.object({}),
-  params: Joi.object({}),
-  body: Joi.object({
+  params: Joi.object({
     jobId: Joi.number().required()
-  })
+  }),
+  body: Joi.object({})
 })
 
 export default {
-  getMyApplications,
-  createApplication
+  getAllOngoingJobs,
+  completeOngoingJob
 }

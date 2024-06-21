@@ -17,9 +17,7 @@ const updateStatusOfApplications = Joi.object({
     applicationId: Joi.number().required()
   }),
   body: Joi.object({
-    status: Joi.string()
-      .valid('APPLIED', 'WAIT_LISTED', 'REJECTED', 'HIRED', 'COMPLETED')
-      .required()
+    status: Joi.string().valid('WAIT_LISTED', 'REJECTED', 'HIRED', 'COMPLETED').required()
   })
 })
 

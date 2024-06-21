@@ -44,6 +44,8 @@ Table Users {
   Feedback Feedback [not null]
   FavoriteBusinesses UserFavoriteBusinesses [not null]
   BusinessesFavoritedBy UserFavoriteBusinesses [not null]
+  GivenRatings UserRating [not null]
+  RecivedRatings UserRating [not null]
 }
 
 Table AthleteInfo {
@@ -116,6 +118,19 @@ Table UserGallery {
   User Users [not null]
 }
 
+Table UserRating {
+  id Int [pk, increment]
+  jobId Int [not null]
+  athleteId Int [not null]
+  businessId Int
+  rating Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  Job Jobs
+  Athlete Users [not null]
+  Business Users
+}
+
 Table UserWallet {
   id Int [pk, increment]
   userId Int [not null]
@@ -145,6 +160,7 @@ Table Jobs {
   salary Int [not null]
   type JOB_TYPE [not null]
   status JOB_STATUS [not null, default: 'OPEN']
+  hasCompletedByAthlete Boolean [not null, default: false]
   hasPaid Boolean [not null, default: false]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
@@ -156,6 +172,7 @@ Table Jobs {
   JobApplications JobApplications [not null]
   ReportedJobs ReportedJobs [not null]
   UserSchedules UserSchedules [not null]
+  UserRating UserRating [not null]
 }
 
 Table JobApplications {
@@ -301,6 +318,11 @@ Table FeedbackImages {
   Feedback Feedback [not null]
 }
 
+Table Business {
+  favoritebusinessesId Int [ref: > UserFavoriteBusinesses.id]
+  givenratingsId Int [ref: > UserRating.id]
+}
+
 Enum USER_ROLES {
   ATHLETE
   BUSINESS
@@ -363,6 +385,12 @@ Ref: UserOTP.userId > Users.id [delete: Cascade]
 Ref: UserAthleticAchievements.userId > Users.id [delete: Cascade]
 
 Ref: UserGallery.userId > Users.id [delete: Cascade]
+
+Ref: UserRating.jobId > Jobs.id
+
+Ref: UserRating.athleteId > Users.id [delete: Cascade]
+
+Ref: UserRating.businessId > Users.id [delete: Cascade]
 
 Ref: UserWallet.userId > Users.id [delete: Cascade]
 
