@@ -18,6 +18,7 @@ import calculateWalletBalance from '../../utils/calculateWalletBalance'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
+import config from '../../config/config'
 
 type JOB_TYPE = 'SOCIAL_MEDIA' | 'MEET_AND_GREET' | 'AUTOGRAPHS' | 'PHOTO_SHOOTS' | 'OTHER'
 
@@ -54,6 +55,8 @@ type TCreateJobBody = {
 type TPublishJobBody = {
   jobId: number
 }
+
+const insufficientFundsMessage = `Insufficient funds. 💡 Non-Premium businesses pay +${config.PLATFORM_FEE_PERCENTAGE}% salary.`
 
 const getAllJobs = async (
   req: AuthRequest<unknown, unknown, unknown, TGetAllJobsQuery>,
@@ -222,17 +225,22 @@ const createJob = async (
   req: AuthRequest<unknown, unknown, TCreateJobBody>,
   res: Response
 ): Promise<Response> => {
-  const user = req.user
+  const authenticatedUser = req.user
   const { requiredQualification, ...data } = req.body
 
-  if (user === undefined) {
+  if (authenticatedUser === undefined) {
     const response = unauthorizedResponse()
     return res.status(response.status.code).json(response)
   }
 
-  const { userId } = user
+  const { userId } = authenticatedUser
 
   try {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: { BusinessInfo: true }
+    })
+
     const existingSportId = await prisma.sports.findUnique({ where: { id: data.sportId } })
 
     if (existingSportId === null) {
@@ -252,32 +260,49 @@ const createJob = async (
       }
     })
 
-    const transactions = await prisma.userWallet.findMany({ where: { userId } })
-    const walletBalance = calculateWalletBalance(transactions)
+    const isPremium = user?.BusinessInfo?.isPremium
 
-    if (walletBalance >= data.salary) {
-      await prisma.userWallet.create({
-        data: {
-          userId,
-          amount: data.salary,
-          transactionType: 'DEBIT',
-          source: { recourseType: 'JOB', recourseId: job.id }
-        }
-      })
-
-      await prisma.jobs.update({
-        where: { id: job.id },
-        data: { hasPaid: true }
-      })
-
-      const response = createSuccessResponse(job)
+    if (isPremium === undefined) {
+      const response = badRequestResponse('Complete profile first')
       return res.status(response.status.code).json(response)
     }
 
-    const response = okResponse(
-      { job, balance: walletBalance },
-      'Job created successfully but cannot be published due to insufficient funds.'
-    )
+    const transactions = await prisma.transactions.findMany({ where: { userId } })
+    const walletBalance = calculateWalletBalance(transactions, 'BUSINESS')
+
+    const platformFees = (data.salary * config.PLATFORM_FEE_PERCENTAGE) / 100
+
+    if (walletBalance < data.salary || (!isPremium && walletBalance < data.salary + platformFees)) {
+      const response = okResponse({ job, balance: walletBalance }, insufficientFundsMessage)
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.transactions.create({
+      data: {
+        userId,
+        amount: data.salary,
+        transactionType: 'HOLD',
+        source: { event: 'JOB_CREATE', recourseId: job.id }
+      }
+    })
+
+    if (!isPremium) {
+      await prisma.transactions.create({
+        data: {
+          userId,
+          amount: platformFees,
+          transactionType: 'FEE',
+          source: { event: 'JOB_CREATE', recourseId: job.id }
+        }
+      })
+    }
+
+    await prisma.jobs.update({
+      where: { id: job.id },
+      data: { hasPaid: true }
+    })
+
+    const response = createSuccessResponse(job)
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
@@ -295,17 +320,29 @@ const publishJob = async (
   req: AuthRequest<unknown, unknown, TPublishJobBody>,
   res: Response
 ): Promise<Response> => {
-  const user = req.user
+  const authenticatedUser = req.user
   const { jobId } = req.body
 
-  if (user === undefined) {
+  if (authenticatedUser === undefined) {
     const response = unauthorizedResponse()
     return res.status(response.status.code).json(response)
   }
 
-  const { userId } = user
+  const { userId } = authenticatedUser
 
   try {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: { BusinessInfo: true }
+    })
+
+    const isPremium = user?.BusinessInfo?.isPremium
+
+    if (isPremium === undefined) {
+      const response = badRequestResponse('Complete profile first')
+      return res.status(response.status.code).json(response)
+    }
+
     const job = await prisma.jobs.findUnique({
       where: { id: jobId }
     })
@@ -325,30 +362,43 @@ const publishJob = async (
       return res.status(response.status.code).json(response)
     }
 
-    const transactions = await prisma.userWallet.findMany({ where: { userId } })
-    const walletBalance = calculateWalletBalance(transactions)
+    const transactions = await prisma.transactions.findMany({ where: { userId } })
+    const walletBalance = calculateWalletBalance(transactions, 'BUSINESS')
 
-    if (walletBalance >= job.salary) {
-      await prisma.userWallet.create({
-        data: {
-          userId,
-          amount: job.salary,
-          transactionType: 'DEBIT',
-          source: { recourseType: 'JOB', recourseId: job.id }
-        }
-      })
+    const platformFees = (job.salary * config.PLATFORM_FEE_PERCENTAGE) / 100
 
-      await prisma.jobs.update({
-        where: { id: job.id },
-        data: { hasPaid: true }
-      })
-
-      const response = updateSuccessResponse()
-      return res.status(response.status.code).json(response)
-    } else {
-      const response = okResponse('cannot be published due to insufficient funds')
+    if (walletBalance < job.salary || (!isPremium && walletBalance < job.salary + platformFees)) {
+      const response = okResponse({ job, balance: walletBalance }, insufficientFundsMessage)
       return res.status(response.status.code).json(response)
     }
+
+    await prisma.transactions.create({
+      data: {
+        userId,
+        amount: job.salary,
+        transactionType: 'HOLD',
+        source: { event: 'JOB_CREATE', recourseId: job.id }
+      }
+    })
+
+    if (!isPremium) {
+      await prisma.transactions.create({
+        data: {
+          userId,
+          amount: platformFees,
+          transactionType: 'FEE',
+          source: { event: 'JOB_CREATE', recourseId: job.id }
+        }
+      })
+    }
+
+    await prisma.jobs.update({
+      where: { id: job.id },
+      data: { hasPaid: true }
+    })
+
+    const response = updateSuccessResponse()
+    return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
       console.error(error.message)

@@ -68,20 +68,6 @@ const createPayout = async (
   }
 }
 
-const availableBalance = async (
-  connectedAccountId: string
-): Promise<Stripe.Response<Stripe.Balance>> => {
-  try {
-    const balance = await stripe.balance.retrieve({
-      stripeAccount: connectedAccountId
-    })
-
-    return balance
-  } catch (error) {
-    throw new Error('Error while fetching available balance')
-  }
-}
-
 const createPaymentIntent = async (
   amount: number,
   metadata: Stripe.MetadataParam
@@ -115,7 +101,7 @@ const getMyTransactions = async (req: AuthRequest, res: Response): Promise<Respo
     return res.status(response.status.code).json(response)
   }
 
-  const { userId } = user
+  const { userId, role } = user
 
   try {
     const user = await prisma.users.findUnique({
@@ -127,15 +113,14 @@ const getMyTransactions = async (req: AuthRequest, res: Response): Promise<Respo
       return res.status(response.status.code).json(response)
     }
 
-    const transactions = await prisma.userWallet.findMany({
+    const transactions = await prisma.transactions.findMany({
       where: { userId },
       orderBy: {
         createdAt: 'desc'
       }
     })
 
-    const balance = calculateWalletBalance(transactions)
-    // const balanceAvailableToWithdraw = await availableBalance(user.stripeAccountId)
+    const balance = calculateWalletBalance(transactions, role)
 
     const response = okResponse({ balance, transactions })
     return res.status(response.status.code).json(response)
@@ -198,7 +183,7 @@ const withdraw = async (
     return res.status(response.status.code).json(response)
   }
 
-  const { userId } = user
+  const { userId, role } = user
 
   try {
     const user = await prisma.users.findUnique({
@@ -220,14 +205,14 @@ const withdraw = async (
       return res.status(response.status.code).json(response)
     }
 
-    const transactions = await prisma.userWallet.findMany({
+    const transactions = await prisma.transactions.findMany({
       where: { userId },
       orderBy: {
         createdAt: 'desc'
       }
     })
 
-    const balance = calculateWalletBalance(transactions)
+    const balance = calculateWalletBalance(transactions, role)
 
     if (balance < withdrawAmount) {
       const response = badRequestResponse('Not enough funds')
@@ -237,10 +222,10 @@ const withdraw = async (
     await createTransfer(user.stripeAccountId, withdrawAmount)
     await createPayout(user.stripeAccountId, bankAccountId, withdrawAmount)
 
-    await prisma.userWallet.create({
+    await prisma.transactions.create({
       data: {
         userId,
-        transactionType: 'CREDIT',
+        transactionType: 'WITHDRAWAL',
         amount: withdrawAmount
       }
     })

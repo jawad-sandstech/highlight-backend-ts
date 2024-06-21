@@ -33,7 +33,7 @@ Table Users {
   UserSavedJobs UserSavedJobs [not null]
   UserHiddenJobs UserHiddenJobs [not null]
   JobApplications JobApplications [not null]
-  UserWallet UserWallet [not null]
+  Transactions Transactions [not null]
   AthleteInfo AthleteInfo
   BusinessInfo BusinessInfo
   ReportedJobs ReportedJobs [not null]
@@ -131,7 +131,7 @@ Table UserRating {
   Business Users
 }
 
-Table UserWallet {
+Table Transactions {
   id Int [pk, increment]
   userId Int [not null]
   amount Int [not null]
@@ -370,8 +370,11 @@ Enum CHAT_TYPE {
 }
 
 Enum TRANSACTION_TYPE {
-  DEBIT
-  CREDIT
+  DEPOSIT
+  FEE
+  HOLD
+  PAYMENT
+  WITHDRAWAL
 }
 
 Ref: AthleteInfo.userId - Users.id [delete: Cascade]
@@ -392,7 +395,7 @@ Ref: UserRating.athleteId > Users.id [delete: Cascade]
 
 Ref: UserRating.businessId > Users.id [delete: Cascade]
 
-Ref: UserWallet.userId > Users.id [delete: Cascade]
+Ref: Transactions.userId > Users.id [delete: Cascade]
 
 Ref: Jobs.userId > Users.id [delete: Cascade]
 

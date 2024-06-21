@@ -15,7 +15,8 @@ const config = {
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
   S3_ACCESS_URL: process.env.S3_ACCESS_URL!,
   BUCKET_NAME: process.env.BUCKET_NAME!,
-  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET!
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET!,
+  PLATFORM_FEE_PERCENTAGE: Number(process.env.PLATFORM_FEE_PERCENTAGE!)
 }
 
 export default config

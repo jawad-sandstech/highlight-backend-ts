@@ -126,11 +126,11 @@ CREATE TABLE `UserRating` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `UserWallet` (
+CREATE TABLE `Transactions` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
     `amount` INTEGER NOT NULL,
-    `transactionType` ENUM('DEBIT', 'CREDIT') NOT NULL,
+    `transactionType` ENUM('DEPOSIT', 'FEE', 'HOLD', 'PAYMENT', 'WITHDRAWAL') NOT NULL,
     `source` JSON NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -360,7 +360,7 @@ ALTER TABLE `UserRating` ADD CONSTRAINT `UserRating_athleteId_fkey` FOREIGN KEY 
 ALTER TABLE `UserRating` ADD CONSTRAINT `UserRating_businessId_fkey` FOREIGN KEY (`businessId`) REFERENCES `Users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `UserWallet` ADD CONSTRAINT `UserWallet_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `Transactions` ADD CONSTRAINT `Transactions_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Jobs` ADD CONSTRAINT `Jobs_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

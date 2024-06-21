@@ -46,7 +46,7 @@ model Users {
   UserSavedJobs            UserSavedJobs[]
   UserHiddenJobs           UserHiddenJobs[]
   JobApplications          JobApplications[]
-  UserWallet               UserWallet[]
+  Transactions             Transactions[]
   AthleteInfo              AthleteInfo?
   BusinessInfo             BusinessInfo?
   ReportedJobs             ReportedJobs[]
@@ -144,7 +144,7 @@ model UserRating {
   Business   Users?   @relation(name: "Business", fields: [businessId], references: [id])
 }
 
-model UserWallet {
+model Transactions {
   id              Int              @id @default(autoincrement())
   userId          Int
   amount          Int
@@ -378,6 +378,9 @@ enum CHAT_TYPE {
 }
 
 enum TRANSACTION_TYPE {
-  DEBIT
-  CREDIT
+  DEPOSIT
+  FEE
+  HOLD
+  PAYMENT
+  WITHDRAWAL
 }
