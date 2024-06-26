@@ -276,7 +276,10 @@ const updateProfile = async (
 
     await prisma.users.update({
       where: { id: userId },
-      data
+      data: {
+        ...data,
+        isProfileComplete: true
+      }
     })
 
     const response = updateSuccessResponse()
@@ -324,6 +327,11 @@ const updateAthleteInfo = async (
       const response = notFoundResponse(`Sport with id: ${data.sportId} not found.`)
       return res.status(response.status.code).json(response)
     }
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { hasUpdatedAthleteInfo: true }
+    })
 
     await prisma.athleteInfo.update({
       where: { id: user.AthleteInfo?.id },
@@ -383,6 +391,11 @@ const updateBusinessInfo = async (
       const response = unauthorizedResponse()
       return res.status(response.status.code).json(response)
     }
+
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { hasUpdatedBusinessInfo: true }
+    })
 
     await prisma.businessInfo.update({
       where: { id: user.BusinessInfo?.id },

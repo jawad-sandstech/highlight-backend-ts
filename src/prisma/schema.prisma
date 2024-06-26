@@ -35,6 +35,8 @@ model Users {
   isEmailVerified          Boolean                    @default(false)
   isStripeVerified         Boolean                    @default(false)
   isProfileComplete        Boolean                    @default(false)
+  hasUpdatedAthleteInfo    Boolean                    @default(false)
+  hasUpdatedBusinessInfo   Boolean                    @default(false)
   fcmToken                 String?                    @db.Text
   createdAt                DateTime                   @default(now())
   updatedAt                DateTime                   @updatedAt

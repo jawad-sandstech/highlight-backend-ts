@@ -4,6 +4,7 @@ import validateRequest from '../../middlewares/validateRequest.middleware'
 
 import authValidations from '../../validations/users/auth'
 import authControllers from '../../controllers/users/auth.controllers'
+import authRequired from '../../middlewares/authRequired.middleware'
 
 const router = express.Router()
 
@@ -16,6 +17,7 @@ router.post(
 )
 router.post(
   '/reset-password',
+  authRequired(),
   validateRequest(authValidations.resetPassword),
   authControllers.resetPassword
 )

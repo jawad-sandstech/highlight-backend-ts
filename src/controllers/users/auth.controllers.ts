@@ -236,11 +236,19 @@ const resetPassword = async (
   req: AuthRequest<unknown, unknown, TResetPasswordBody>,
   res: Response
 ): Promise<Response> => {
-  const { otp, email, newPassword } = req.body
+  const { newPassword } = req.body
+  const user = req.user
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
 
   try {
     const user = await prisma.users.findUnique({
-      where: { email },
+      where: { id: userId },
       include: {
         UserPasswords: {
           where: {
@@ -254,21 +262,6 @@ const resetPassword = async (
       const response = notFoundResponse('User not found.')
       return res.status(response.status.code).json(response)
     }
-
-    const existingOTP = await prisma.userOTP.findFirst({
-      where: {
-        userId: user.id,
-        otp,
-        isExpired: false
-      }
-    })
-
-    if (existingOTP === null) {
-      const response = unauthorizedResponse('Invalid OTP or OTP expired')
-      return res.status(response.status.code).json(response)
-    }
-
-    await expireOTP(existingOTP.id)
 
     await prisma.userPasswords.update({
       data: { isActive: false },
@@ -332,7 +325,14 @@ const verifyOtp = async (
 
     await expireOTP(userOTP.id)
 
-    const response = okResponse(null, 'OTP verified.')
+    const payload = {
+      userId: user.id,
+      role: user.role
+    }
+
+    const token = jwt.sign(payload, config.JWT_SECRET)
+
+    const response = okResponse({ token, user: payload }, 'OTP verified.')
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
