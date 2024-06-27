@@ -29,8 +29,17 @@ type TUpdateProfileBody = {
 
 type TUpdateAthleteInfoBody = {
   schoolName?: string
+  universityName?: string
   sportId?: number
-  year?: number
+  experience?:
+    | 'BEGINNER'
+    | 'INTERMEDIATE'
+    | 'ADVANCED'
+    | 'EXPERT'
+    | 'ELITE'
+    | 'RECREATIONAL'
+    | 'SEMI_PROFESSIONAL'
+    | 'PROFESSIONAL'
   position?: string
   bio?: string
   attachment?: string

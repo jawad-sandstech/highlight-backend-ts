@@ -54,9 +54,10 @@ Table AthleteInfo {
   id Int [pk, increment]
   userId Int [unique, not null]
   instagramUsername String
+  experience ATHLETE_EXPERIENCE
   schoolName String
+  universityName String
   sportId Int
-  year Int
   position String
   attachment String
   bio String
@@ -377,6 +378,17 @@ Enum TRANSACTION_TYPE {
   HOLD
   PAYMENT
   WITHDRAWAL
+}
+
+Enum ATHLETE_EXPERIENCE {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+  ELITE
+  RECREATIONAL
+  SEMI_PROFESSIONAL
+  PROFESSIONAL
 }
 
 Ref: AthleteInfo.userId - Users.id [delete: Cascade]
