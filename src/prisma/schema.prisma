@@ -54,13 +54,14 @@ model Users {
   ReportedJobs             ReportedJobs[]
   Participants             Participants[]
   Messages                 Messages[]
-  UserSchedules            UserSchedules[]
   UserPreference           UserPreference?
   Feedback                 Feedback[]
   FavoriteBusinesses       UserFavoriteBusinesses[]   @relation("Business")
   BusinessesFavoritedBy    UserFavoriteBusinesses[]   @relation("User")
   GivenRatings             UserRating[]               @relation("Business")
   RecivedRatings           UserRating[]               @relation("Athlete")
+  OrganizedSchedules       UserSchedules[]            @relation("OrganizerSchedules")
+  AttendedSchedules        UserSchedules[]            @relation("AttendeeSchedules")
 }
 
 model AthleteInfo {
@@ -280,35 +281,26 @@ model Participants {
 }
 
 model Messages {
-  id        Int      @id @default(autoincrement())
-  chatId    Int
-  senderId  Int
-  content   String?  @db.Text
-  createdAt DateTime @default(now())
-  Chat      Chats    @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  User      Users    @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  Files     Files?
-}
-
-model Files {
-  id          Int      @id @default(autoincrement())
-  messageId   Int      @unique
-  fileName    String
-  orignalName String
-  mimeType    String
-  size        Float
-  createdAt   DateTime @default(now())
-  Message     Messages @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  chatId     Int
+  senderId   Int
+  attachment String?
+  content    String?  @db.Text
+  createdAt  DateTime @default(now())
+  Chat       Chats    @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  User       Users    @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }
 
 model UserSchedules {
   id              Int      @id @default(autoincrement())
-  userId          Int
+  organizerId     Int
+  attendeeId      Int
   jobId           Int
   meetingDateTime DateTime
   zoomMeetingLink String
   createdAt       DateTime @default(now())
-  User            Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Organizer       Users    @relation("OrganizerSchedules", fields: [organizerId], references: [id], onDelete: Cascade)
+  Attendee        Users    @relation("AttendeeSchedules", fields: [attendeeId], references: [id], onDelete: Cascade)
   Job             Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }
 

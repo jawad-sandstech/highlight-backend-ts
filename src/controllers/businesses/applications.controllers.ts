@@ -151,6 +151,26 @@ const updateStatusOfApplications = async (
         where: { id: application.id },
         data: { status }
       })
+
+      const chat = await prisma.chats.create({
+        data: {
+          name: application.Job.title,
+          type: 'PRIVATE',
+          Participants: {
+            createMany: {
+              data: [{ userId }, { userId: application.userId }]
+            }
+          }
+        }
+      })
+
+      await prisma.messages.create({
+        data: {
+          chatId: chat.id,
+          senderId: userId,
+          content: "Let's go!!!"
+        }
+      })
     }
 
     if (status === 'COMPLETED') {
