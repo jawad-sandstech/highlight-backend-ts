@@ -1,15 +1,10 @@
-import {
-  serverErrorResponse,
-  okResponse,
-  unauthorizedResponse,
-  notFoundResponse
-} from 'generic-response'
+import { serverErrorResponse, okResponse, unauthorizedResponse } from 'generic-response'
 
 import prisma from '../../config/database.config'
 
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
-import type { Participants } from '@prisma/client'
+// import type { Participants } from '@prisma/client'
 
 type TGetAllSchedulesQuery = {
   jobId?: string
@@ -25,9 +20,9 @@ type TGetAllSchedulesWhereClause = {
   jobId?: number
 }
 
-const isUserParticipant = (participants: Participants[], userId: number): boolean => {
-  return participants.some((participant: any) => participant.userId === userId)
-}
+// const isUserParticipant = (participants: Participants[], userId: number): boolean => {
+//   return participants.some((participant: any) => participant.userId === userId)
+// }
 
 const getAllSchedules = async (
   req: AuthRequest<unknown, unknown, unknown, TGetAllSchedulesQuery>,
@@ -79,38 +74,37 @@ const createSchedule = async (
   res: Response
 ): Promise<Response> => {
   const user = req.user
-  const data = req.body
+  // const data = req.body
 
   if (user === undefined) {
     const response = unauthorizedResponse()
     return res.status(response.status.code).json(response)
   }
 
-  const { userId } = user
+  // const { userId } = user
 
   try {
-    const chat = await prisma.userSchedules.findUnique({
-      where: { id: data. },
-      include: {
-        Participants: {
-          include: {
-            User: true
-          }
-        }
-      }
-    })
+    // const chat = await prisma.userSchedules.findUnique()
+    // where: { id: data. },
+    // include: {
+    //   Participants: {
+    //     include: {
+    //       User: true
+    //     }
+    //   }
+    // }
 
-    if (chat === null) {
-      const response = notFoundResponse()
-      return res.status(response.status.code).json(response)
-    }
+    // if (chat === null) {
+    // const response = notFoundResponse()
+    // return res.status(response.status.code).json(response)
+    // }
 
-    if (!isUserParticipant(chat?.Participants, userId)) {
-      const response = unauthorizedResponse()
-      return res.status(response.status.code).json(response)
-    }
+    // if (!isUserParticipant(chat?.Participants, userId)) {
+    //   const response = unauthorizedResponse()
+    //   return res.status(response.status.code).json(response)
+    // }
 
-    const response = okResponse(chat)
+    const response = okResponse()
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {

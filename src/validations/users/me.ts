@@ -87,7 +87,9 @@ const updateBusinessInfo = Joi.object({
     overview: Joi.string().optional(),
     phoneNumber: Joi.string().optional(),
     email: Joi.string().optional(),
-    website: Joi.string().optional()
+    website: Joi.string().optional(),
+    address: Joi.string().optional(),
+    zoomId: Joi.string().optional()
   })
 })
 

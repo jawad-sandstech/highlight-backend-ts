@@ -3,7 +3,7 @@ import cors from 'cors'
 import reqResInspector from 'express-req-res-inspector'
 
 import stripeWebhookHandler from './webhooks'
-import apiRoutes from './routes/index'
+import apiRoutes from './routes'
 
 const app = express()
 

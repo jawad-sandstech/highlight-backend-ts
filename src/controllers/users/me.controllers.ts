@@ -14,9 +14,18 @@ import prisma from '../../config/database.config'
 import stripe from '../../config/stripe.config'
 import s3 from '../../config/s3.config'
 
+import type { Users, AthleteInfo, BusinessInfo } from '@prisma/client'
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import config from '../../config/config'
+
+type UserProfileWithAge =
+  | (Users & {
+      age?: number | null
+      AthleteInfo: AthleteInfo | null
+      BusinessInfo: BusinessInfo | null
+    })
+  | null
 
 type TUpdateProfileBody = {
   fullName?: string
@@ -73,13 +82,32 @@ const getMyProfile = async (req: AuthRequest, res: Response): Promise<Response> 
   const { userId } = user
 
   try {
-    const user = await prisma.users.findUnique({
-      where: { id: userId }
+    const user: UserProfileWithAge = await prisma.users.findUnique({
+      where: { id: userId },
+      include: {
+        AthleteInfo: true,
+        BusinessInfo: true
+      }
     })
 
     if (user === null) {
       const response = notFoundResponse('User not found')
       return res.status(response.status.code).json(response)
+    }
+
+    if (user.dateOfBirth !== null) {
+      const birthDate = new Date(user.dateOfBirth)
+      const today = new Date()
+      let age = today.getFullYear() - birthDate.getFullYear()
+      const monthDiff = today.getMonth() - birthDate.getMonth()
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--
+      }
+
+      user.age = age
+    } else {
+      user.age = null
     }
 
     if (user.profilePicture !== null) {
