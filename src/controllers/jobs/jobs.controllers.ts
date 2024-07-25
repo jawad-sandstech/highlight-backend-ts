@@ -45,6 +45,10 @@ type TGetSingleJobParams = {
   jobId: string
 }
 
+type TCreateJobQueryParams = {
+  is_draft?: string
+}
+
 type TCreateJobBody = {
   title: string
   description: string
@@ -220,10 +224,11 @@ const uploadJobBanner = async (file: Express.Multer.File): Promise<string> => {
 }
 
 const createJob = async (
-  req: AuthRequest<unknown, unknown, TCreateJobBody>,
+  req: AuthRequest<unknown, unknown, TCreateJobBody, TCreateJobQueryParams>,
   res: Response
 ): Promise<Response> => {
   const authenticatedUser = req.user
+  const { is_draft: isDraft } = req.query
   const file = req.file
   req.body = parseCreateJobFormData(req.body)
   const { requiredQualification, ...data } = req.body
@@ -274,6 +279,11 @@ const createJob = async (
         }
       }
     })
+
+    if (isDraft === 'true') {
+      const response = createSuccessResponse(job)
+      return res.status(response.status.code).json(response)
+    }
 
     const isPremium = user?.BusinessInfo?.isPremium
 

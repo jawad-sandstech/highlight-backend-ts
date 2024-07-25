@@ -46,10 +46,10 @@ const uploadJobBanner = Joi.object({
 })
 
 const createJob = Joi.object({
-  query: Joi.object({}),
-  params: Joi.object({
-    isDraft: Joi.boolean().optional()
+  query: Joi.object({
+    is_draft: Joi.boolean().optional()
   }),
+  params: Joi.object({}),
   body: Joi.object({
     title: Joi.string().required(),
     description: Joi.string().required(),
