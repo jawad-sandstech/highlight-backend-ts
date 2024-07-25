@@ -6,12 +6,30 @@ import {
 } from 'generic-response'
 import multiGroupBy from 'multi-groupby'
 
+import config from '../../config/config'
 import prisma from '../../config/database.config'
 
-import type { Jobs } from '@prisma/client'
+import type { JobRequiredQualifications, Jobs, Users } from '@prisma/client'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
+
+type JobWithUser = Jobs & {
+  User: Users
+  JobRequiredQualifications: JobRequiredQualifications[]
+}
+
+const processJobs = (jobs: JobWithUser[]): JobWithUser[] => {
+  return jobs.map((job) => {
+    job.bannerImage = `${config.S3_ACCESS_URL}/${job.bannerImage}`
+
+    if (job.User?.profilePicture !== null) {
+      job.User.profilePicture = `${config.S3_ACCESS_URL}/${job.User.profilePicture}`
+    }
+
+    return job
+  })
+}
 
 const getAllJobsOfBusiness = async (req: AuthRequest, res: Response): Promise<Response> => {
   const user = req.user
@@ -33,10 +51,12 @@ const getAllJobsOfBusiness = async (req: AuthRequest, res: Response): Promise<Re
       return res.status(response.status.code).json(response)
     }
 
-    const jobs = await prisma.jobs.findMany({
+    let jobs = await prisma.jobs.findMany({
       where: { userId },
-      include: { JobRequiredQualifications: true }
+      include: { User: true, JobRequiredQualifications: true }
     })
+
+    jobs = processJobs(jobs)
 
     type TAllPossibleGroups = 'All' | 'Draft' | 'Open' | 'Filled' | 'Closed'
 

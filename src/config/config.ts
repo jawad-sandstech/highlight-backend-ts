@@ -11,12 +11,18 @@ const config = {
   PORT: process.env.PORT!,
   FRONTEND_URL: process.env.FRONTEND_URL!,
   BACKEND_URL: process.env.BACKEND_URL!,
+
   JWT_SECRET: process.env.JWT_SECRET!,
+  PLATFORM_FEE_PERCENTAGE: Number(process.env.PLATFORM_FEE_PERCENTAGE!),
+
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
-  S3_ACCESS_URL: process.env.S3_ACCESS_URL!,
-  BUCKET_NAME: process.env.BUCKET_NAME!,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET!,
-  PLATFORM_FEE_PERCENTAGE: Number(process.env.PLATFORM_FEE_PERCENTAGE!)
+
+  S3_BUCKET_NAME: process.env.S3_BUCKET_NAME!,
+  S3_BUCKET_REGION: process.env.S3_BUCKET_REGION!,
+  S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID!,
+  S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY!,
+  S3_ACCESS_URL: process.env.S3_ACCESS_URL!
 }
 
 export default config

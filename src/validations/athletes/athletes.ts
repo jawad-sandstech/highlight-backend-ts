@@ -2,9 +2,13 @@ import Joi from 'joi'
 
 const getAllAthletes = Joi.object({
   query: Joi.object({
-    type: Joi.string().valid('new', 'popular', 'regional').optional(),
+    type: Joi.string().valid('New', 'Popular', 'Regional').optional(),
     sportIds: Joi.string().optional(),
-    instagramFollowersGreaterThan: Joi.number().optional()
+    instagramFollowersGreaterThan: Joi.number().optional(),
+    rating: Joi.number().optional(),
+    distance: Joi.number().optional(),
+    isUniversityAthlete: Joi.boolean().optional(),
+    take: Joi.string().optional()
   }),
   params: Joi.object({}),
   body: Joi.object({})

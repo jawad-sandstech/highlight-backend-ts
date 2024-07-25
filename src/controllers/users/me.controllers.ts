@@ -18,6 +18,7 @@ import type { Users, AthleteInfo, BusinessInfo } from '@prisma/client'
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import config from '../../config/config'
+import calculateAge from '../../utils/calculateAge'
 
 type UserProfileWithAge =
   | (Users & {
@@ -96,18 +97,7 @@ const getMyProfile = async (req: AuthRequest, res: Response): Promise<Response> 
     }
 
     if (user.dateOfBirth !== null) {
-      const birthDate = new Date(user.dateOfBirth)
-      const today = new Date()
-      let age = today.getFullYear() - birthDate.getFullYear()
-      const monthDiff = today.getMonth() - birthDate.getMonth()
-
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--
-      }
-
-      user.age = age
-    } else {
-      user.age = null
+      user.age = calculateAge(user.dateOfBirth)
     }
 
     if (user.profilePicture !== null) {

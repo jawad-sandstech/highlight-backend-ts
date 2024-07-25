@@ -14,7 +14,10 @@ import {
 import prisma from '../../config/database.config'
 import s3 from '../../config/s3.config'
 
+import jobValidation from '../../validations/jobs/jobs'
+
 import calculateWalletBalance from '../../utils/calculateWalletBalance'
+import validateRequestHandler from '../../utils/validateRequestHandler'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
@@ -45,7 +48,6 @@ type TGetSingleJobParams = {
 type TCreateJobBody = {
   title: string
   description: string
-  bannerImage: string
   requiredQualification: string[]
   salary: number
   sportId: number
@@ -57,6 +59,16 @@ type TPublishJobBody = {
 }
 
 const insufficientFundsMessage = `Insufficient funds. 💡 Non-Premium businesses pay +${config.PLATFORM_FEE_PERCENTAGE}% salary.`
+
+const parseCreateJobFormData = (reqBody: any): TCreateJobBody => {
+  const data: any = reqBody
+
+  data.requiredQualification = JSON.parse(String(reqBody.requiredQualification))
+  data.salary = Number(reqBody.salary)
+  data.sportId = Number(reqBody.sportId)
+
+  return data
+}
 
 const getAllJobs = async (
   req: AuthRequest<unknown, unknown, unknown, TGetAllJobsQuery>,
@@ -185,21 +197,14 @@ const getSingleJob = async (
   }
 }
 
-const uploadJobBanner = async (req: AuthRequest, res: Response): Promise<Response> => {
-  const { file } = req
-
+const uploadJobBanner = async (file: Express.Multer.File): Promise<string> => {
   try {
-    if (file === undefined) {
-      const response = badRequestResponse('No file attached')
-      return res.status(response.status.code).json(response)
-    }
-
     const folderName = 'job-banner'
 
     const randomImageName = crypto.randomBytes(32).toString('hex')
 
     const command = new PutObjectCommand({
-      Bucket: process.env.BUCKET_NAME,
+      Bucket: config.S3_BUCKET_NAME,
       Key: `${folderName}/${randomImageName}`,
       Body: file.buffer,
       ContentType: file.mimetype
@@ -207,17 +212,10 @@ const uploadJobBanner = async (req: AuthRequest, res: Response): Promise<Respons
 
     await s3.send(command)
 
-    const response = createSuccessResponse({ Key: `${folderName}/${randomImageName}` })
-    return res.status(response.status.code).json(response)
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message)
-      const response = serverErrorResponse(error.message)
-      return res.status(response.status.code).json(response)
-    } else {
-      const response = serverErrorResponse('An unexpected error occurred')
-      return res.status(response.status.code).json(response)
-    }
+    return `${folderName}/${randomImageName}`
+  } catch (error: any) {
+    console.log('error', error.message)
+    throw Error('Error uploading job banner')
   }
 }
 
@@ -226,7 +224,21 @@ const createJob = async (
   res: Response
 ): Promise<Response> => {
   const authenticatedUser = req.user
+  const file = req.file
+  req.body = parseCreateJobFormData(req.body)
   const { requiredQualification, ...data } = req.body
+
+  const [success, error] = validateRequestHandler(jobValidation.createJob, req)
+
+  if (!success) {
+    const response = badRequestResponse(error)
+    return res.status(response.status.code).json(response)
+  }
+
+  if (file === undefined) {
+    const response = badRequestResponse('No file attached')
+    return res.status(response.status.code).json(response)
+  }
 
   if (authenticatedUser === undefined) {
     const response = unauthorizedResponse()
@@ -248,10 +260,13 @@ const createJob = async (
       return res.status(response.status.code).json(response)
     }
 
+    const bannerImage = await uploadJobBanner(file)
+
     const job = await prisma.jobs.create({
       data: {
         userId,
         ...data,
+        bannerImage,
         JobRequiredQualifications: {
           createMany: {
             data: requiredQualification.map((i) => ({ description: i }))

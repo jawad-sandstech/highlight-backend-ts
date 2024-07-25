@@ -29,18 +29,10 @@ router.get(
   feedbacksControllers.getSingleJob
 )
 router.post(
-  '/banner',
-  authRequired(),
-  rolesRequired(['BUSINESS']),
-  upload.single('banner'),
-  validateRequest(feedbacksValidations.uploadJobBanner),
-  feedbacksControllers.uploadJobBanner
-)
-router.post(
   '/',
   authRequired(),
   rolesRequired(['BUSINESS']),
-  validateRequest(feedbacksValidations.createJob),
+  upload.single('banner'),
   feedbacksControllers.createJob
 )
 router.post(

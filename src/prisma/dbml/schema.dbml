@@ -46,7 +46,7 @@ Table Users {
   FavoriteBusinesses UserFavoriteBusinesses [not null]
   BusinessesFavoritedBy UserFavoriteBusinesses [not null]
   GivenRatings UserRating [not null]
-  RecivedRatings UserRating [not null]
+  ReceivedRatings UserRating [not null]
   OrganizedSchedules UserSchedules [not null]
   AttendedSchedules UserSchedules [not null]
 }

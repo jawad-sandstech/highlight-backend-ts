@@ -59,7 +59,7 @@ model Users {
   FavoriteBusinesses       UserFavoriteBusinesses[]   @relation("Business")
   BusinessesFavoritedBy    UserFavoriteBusinesses[]   @relation("User")
   GivenRatings             UserRating[]               @relation("Business")
-  RecivedRatings           UserRating[]               @relation("Athlete")
+  ReceivedRatings          UserRating[]               @relation("Athlete")
   OrganizedSchedules       UserSchedules[]            @relation("OrganizerSchedules")
   AttendedSchedules        UserSchedules[]            @relation("AttendeeSchedules")
 }
