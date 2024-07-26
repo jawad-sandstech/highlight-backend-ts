@@ -3,9 +3,7 @@ import Joi from 'joi'
 const getAllJobs = Joi.object({
   query: Joi.object({
     businessId: Joi.number().optional(),
-    sportIds: Joi.alternatives()
-      .try(Joi.number(), Joi.array().items(Joi.number()).unique())
-      .optional(),
+    sportIds: Joi.string().optional(),
     jobType: Joi.alternatives()
       .try(
         Joi.string().valid('SOCIAL_MEDIA', 'MEET_AND_GREET', 'AUTOGRAPHS', 'PHOTO_SHOOTS', 'OTHER'),

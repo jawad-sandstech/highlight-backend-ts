@@ -5,7 +5,8 @@ import {
   notFoundResponse,
   badRequestResponse,
   unauthorizedResponse,
-  deleteSuccessResponse
+  deleteSuccessResponse,
+  updateSuccessResponse
 } from 'generic-response'
 
 import prisma from '../../config/database.config'
@@ -78,15 +79,19 @@ const savedJob = async (
     })
 
     if (existingSavedJob !== null) {
-      const response = badRequestResponse('Already marked as saved')
+      await prisma.userSavedJobs.delete({
+        where: { id: existingSavedJob.id }
+      })
+
+      const response = updateSuccessResponse()
       return res.status(response.status.code).json(response)
     }
 
-    const savedJob = await prisma.userSavedJobs.create({
+    await prisma.userSavedJobs.create({
       data: { userId, jobId }
     })
 
-    const response = createSuccessResponse(savedJob)
+    const response = updateSuccessResponse()
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {

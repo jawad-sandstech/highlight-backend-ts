@@ -27,7 +27,7 @@ type JOB_TYPE = 'SOCIAL_MEDIA' | 'MEET_AND_GREET' | 'AUTOGRAPHS' | 'PHOTO_SHOOTS
 
 type TGetAllJobsQuery = {
   businessId?: string
-  sportIds?: string | string[]
+  sportIds?: string
   jobType?: JOB_TYPE | JOB_TYPE[]
   datePosted?: 'ANY_TIME' | 'PAST_24_HOURS' | 'PAST_WEEK' | 'PAST_MONTH'
   minimumCompensation?: 'NONE' | '$50' | '$100' | '$200' | '$400'
@@ -96,11 +96,7 @@ const getAllJobs = async (
     }
 
     if (sportIds !== undefined) {
-      if (Array.isArray(sportIds)) {
-        whereClause.sportId = { in: sportIds.map((i) => Number(i)) }
-      } else {
-        whereClause.sportId = Number(sportIds)
-      }
+      whereClause.sportId = { in: sportIds.split(',').map(Number) }
     }
 
     if (jobType !== undefined) {
@@ -178,7 +174,8 @@ const getSingleJob = async (
       include: {
         User: true,
         Sport: true,
-        JobRequiredQualifications: true
+        JobRequiredQualifications: true,
+        UserSavedJobs: true
       }
     })
 
@@ -281,6 +278,7 @@ const createJob = async (
     })
 
     if (isDraft === 'true') {
+      console.log('first')
       const response = createSuccessResponse(job)
       return res.status(response.status.code).json(response)
     }
