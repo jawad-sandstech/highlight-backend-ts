@@ -16,7 +16,8 @@ const createFeedbacks = Joi.object({
   query: Joi.object({}),
   params: Joi.object({}),
   body: Joi.object({
-    text: Joi.string().required(),
+    subject: Joi.string().required(),
+    description: Joi.string().required(),
     images: Joi.array()
       .items(
         Joi.object({

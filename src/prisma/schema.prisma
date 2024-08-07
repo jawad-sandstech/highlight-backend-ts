@@ -316,7 +316,8 @@ model UserPreference {
 model Feedback {
   id             Int              @id @default(autoincrement())
   userId         Int
-  text           String           @db.Text
+  subject        String           @db.Text
+  description    String           @db.Text
   createdAt      DateTime         @default(now())
   User           Users            @relation(fields: [userId], references: [id])
   FeedbackImages FeedbackImages[]

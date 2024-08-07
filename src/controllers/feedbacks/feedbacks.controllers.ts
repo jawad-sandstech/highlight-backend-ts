@@ -21,7 +21,8 @@ type TFeedback = Feedback & {
 }
 
 type TCreateFeedbacksBody = {
-  text: string
+  subject: string
+  description: string
   images: Array<{ path: string }>
 }
 
@@ -77,7 +78,7 @@ const uploadPicture = async (req: AuthRequest, res: Response): Promise<Response>
     const randomImageName = crypto.randomBytes(32).toString('hex')
 
     const command = new PutObjectCommand({
-      Bucket: process.env.BUCKET_NAME,
+      Bucket: config.S3_BUCKET_NAME,
       Key: `${folderName}/${randomImageName}`,
       Body: file.buffer,
       ContentType: file.mimetype

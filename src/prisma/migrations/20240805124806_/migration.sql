@@ -19,6 +19,8 @@ CREATE TABLE `Users` (
     `isEmailVerified` BOOLEAN NOT NULL DEFAULT false,
     `isStripeVerified` BOOLEAN NOT NULL DEFAULT false,
     `isProfileComplete` BOOLEAN NOT NULL DEFAULT false,
+    `hasUpdatedAthleteInfo` BOOLEAN NOT NULL DEFAULT false,
+    `hasUpdatedBusinessInfo` BOOLEAN NOT NULL DEFAULT false,
     `fcmToken` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -33,9 +35,10 @@ CREATE TABLE `AthleteInfo` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
     `instagramUsername` VARCHAR(191) NULL,
+    `experience` ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT', 'ELITE', 'RECREATIONAL', 'SEMI_PROFESSIONAL', 'PROFESSIONAL') NULL,
     `schoolName` VARCHAR(191) NULL,
+    `universityName` VARCHAR(191) NULL,
     `sportId` INTEGER NULL,
-    `year` INTEGER NULL,
     `position` VARCHAR(191) NULL,
     `attachment` TEXT NULL,
     `bio` TEXT NULL,
@@ -57,6 +60,8 @@ CREATE TABLE `BusinessInfo` (
     `phoneNumber` VARCHAR(191) NULL,
     `email` VARCHAR(191) NULL,
     `website` VARCHAR(191) NULL,
+    `address` VARCHAR(191) NULL,
+    `zoomId` VARCHAR(191) NULL,
     `isPremium` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -270,6 +275,7 @@ CREATE TABLE `Messages` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `chatId` INTEGER NOT NULL,
     `senderId` INTEGER NOT NULL,
+    `attachment` VARCHAR(191) NULL,
     `content` TEXT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -277,23 +283,10 @@ CREATE TABLE `Messages` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Files` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `messageId` INTEGER NOT NULL,
-    `fileName` VARCHAR(191) NOT NULL,
-    `orignalName` VARCHAR(191) NOT NULL,
-    `mimeType` VARCHAR(191) NOT NULL,
-    `size` DOUBLE NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    UNIQUE INDEX `Files_messageId_key`(`messageId`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `UserSchedules` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `userId` INTEGER NOT NULL,
+    `organizerId` INTEGER NOT NULL,
+    `attendeeId` INTEGER NOT NULL,
     `jobId` INTEGER NOT NULL,
     `meetingDateTime` DATETIME(3) NOT NULL,
     `zoomMeetingLink` VARCHAR(191) NOT NULL,
@@ -334,6 +327,9 @@ CREATE TABLE `FeedbackImages` (
 
 -- AddForeignKey
 ALTER TABLE `AthleteInfo` ADD CONSTRAINT `AthleteInfo_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `AthleteInfo` ADD CONSTRAINT `AthleteInfo_sportId_fkey` FOREIGN KEY (`sportId`) REFERENCES `Sports`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `BusinessInfo` ADD CONSTRAINT `BusinessInfo_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -414,10 +410,10 @@ ALTER TABLE `Messages` ADD CONSTRAINT `Messages_chatId_fkey` FOREIGN KEY (`chatI
 ALTER TABLE `Messages` ADD CONSTRAINT `Messages_senderId_fkey` FOREIGN KEY (`senderId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Files` ADD CONSTRAINT `Files_messageId_fkey` FOREIGN KEY (`messageId`) REFERENCES `Messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `UserSchedules` ADD CONSTRAINT `UserSchedules_organizerId_fkey` FOREIGN KEY (`organizerId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `UserSchedules` ADD CONSTRAINT `UserSchedules_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `UserSchedules` ADD CONSTRAINT `UserSchedules_attendeeId_fkey` FOREIGN KEY (`attendeeId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `UserSchedules` ADD CONSTRAINT `UserSchedules_jobId_fkey` FOREIGN KEY (`jobId`) REFERENCES `Jobs`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

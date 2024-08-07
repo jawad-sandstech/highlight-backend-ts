@@ -303,7 +303,8 @@ Table UserPreference {
 Table Feedback {
   id Int [pk, increment]
   userId Int [not null]
-  text String [not null]
+  subject String [not null]
+  description String [not null]
   createdAt DateTime [default: `now()`, not null]
   User Users [not null]
   FeedbackImages FeedbackImages [not null]
