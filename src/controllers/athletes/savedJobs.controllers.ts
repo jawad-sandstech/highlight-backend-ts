@@ -1,11 +1,8 @@
 import {
   okResponse,
   serverErrorResponse,
-  createSuccessResponse,
   notFoundResponse,
-  badRequestResponse,
   unauthorizedResponse,
-  deleteSuccessResponse,
   updateSuccessResponse
 } from 'generic-response'
 
@@ -14,12 +11,8 @@ import prisma from '../../config/database.config'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
 
-type TSavedJobsBody = {
+type TToggleSavedJobsBody = {
   jobId: number
-}
-
-type TDeleteSavedJobParams = {
-  savedJobId: number
 }
 
 const getMySavedJobs = async (req: AuthRequest, res: Response): Promise<Response> => {
@@ -52,8 +45,8 @@ const getMySavedJobs = async (req: AuthRequest, res: Response): Promise<Response
   }
 }
 
-const savedJob = async (
-  req: AuthRequest<unknown, unknown, TSavedJobsBody>,
+const toggleSavedJob = async (
+  req: AuthRequest<unknown, unknown, TToggleSavedJobsBody>,
   res: Response
 ): Promise<Response> => {
   const user = req.user
@@ -83,7 +76,7 @@ const savedJob = async (
         where: { id: existingSavedJob.id }
       })
 
-      const response = updateSuccessResponse()
+      const response = updateSuccessResponse({ status: false })
       return res.status(response.status.code).json(response)
     }
 
@@ -91,49 +84,7 @@ const savedJob = async (
       data: { userId, jobId }
     })
 
-    const response = updateSuccessResponse()
-    return res.status(response.status.code).json(response)
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message)
-      const response = serverErrorResponse(error.message)
-      return res.status(response.status.code).json(response)
-    } else {
-      const response = serverErrorResponse('An unexpected error occurred')
-      return res.status(response.status.code).json(response)
-    }
-  }
-}
-
-const deleteSavedJob = async (
-  req: AuthRequest<TDeleteSavedJobParams>,
-  res: Response
-): Promise<Response> => {
-  const user = req.user
-  const savedJobId = Number(req.params.savedJobId)
-
-  if (user === undefined) {
-    const response = unauthorizedResponse()
-    return res.status(response.status.code).json(response)
-  }
-
-  const { userId } = user
-
-  try {
-    const savedJob = await prisma.userSavedJobs.findFirst({
-      where: { id: savedJobId, userId }
-    })
-
-    if (savedJob === null) {
-      const response = notFoundResponse('not found')
-      return res.status(response.status.code).json(response)
-    }
-
-    const deletedSavedJob = await prisma.userSavedJobs.delete({
-      where: { id: savedJobId }
-    })
-
-    const response = deleteSuccessResponse(deletedSavedJob)
+    const response = updateSuccessResponse({ status: true })
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
@@ -149,6 +100,5 @@ const deleteSavedJob = async (
 
 export default {
   getMySavedJobs,
-  savedJob,
-  deleteSavedJob
+  toggleSavedJob
 }

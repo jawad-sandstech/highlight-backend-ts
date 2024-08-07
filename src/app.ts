@@ -17,5 +17,3 @@ app.use(reqResInspector())
 app.use('/api/v1', apiRoutes)
 
 export default app
-
-// sport array, toggle, single me saved jobs

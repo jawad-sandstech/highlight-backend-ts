@@ -1,74 +1,37 @@
-import {
-  okResponse,
-  serverErrorResponse,
-  notFoundResponse,
-  unauthorizedResponse
-} from 'generic-response'
-import multiGroupBy from 'multi-groupby'
+import { okResponse, serverErrorResponse, notFoundResponse } from 'generic-response'
 
 import prisma from '../../config/database.config'
-
-import type { Users, BusinessInfo } from '@prisma/client'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
 
-type TUserWithBusinessInfo = Users & {
-  BusinessInfo: BusinessInfo | null
+type TGetAllBusinessParams = {
+  isPremium: string
 }
-
-type TAllPossibleGroups = 'All' | 'Premium Businesses' | 'Favorite Businesses'
 
 type TGetSingleBusinessParams = {
   businessId: number
 }
 
-const getAllBusinesses = async (req: AuthRequest, res: Response): Promise<Response> => {
-  const user = req.user
+const getAllBusinesses = async (
+  req: AuthRequest<unknown, unknown, unknown, TGetAllBusinessParams>,
+  res: Response
+): Promise<Response> => {
+  const isPremium = req.query.isPremium
 
-  if (user === undefined) {
-    const response = unauthorizedResponse()
-    return res.status(response.status.code).json(response)
+  const whereClause: any = { role: 'BUSINESS' }
+
+  if (isPremium === 'true') {
+    whereClause.BusinessInfo = { isPremium: true }
   }
-
-  const { userId } = user
 
   try {
     const businesses = await prisma.users.findMany({
-      where: { role: 'BUSINESS' },
+      where: whereClause,
       include: { BusinessInfo: true }
     })
 
-    const userFavoriteBusinesses = await prisma.userFavoriteBusinesses.findMany({
-      where: { userId }
-    })
-
-    const userFavoriteBusinessIds = userFavoriteBusinesses.map((i) => i.businessId)
-
-    const classifyBusinesses = (business: TUserWithBusinessInfo): TAllPossibleGroups[] => {
-      const groups: TAllPossibleGroups[] = []
-
-      groups.push('All')
-
-      if (business.BusinessInfo !== null && business.BusinessInfo.isPremium) {
-        groups.push('Premium Businesses')
-      }
-
-      if (userFavoriteBusinessIds.includes(business.id)) {
-        groups.push('Favorite Businesses')
-      }
-
-      return groups
-    }
-
-    const allPossibleGroups: TAllPossibleGroups[] = [
-      'All',
-      'Premium Businesses',
-      'Favorite Businesses'
-    ]
-    const groupedBusinesses = multiGroupBy(businesses, allPossibleGroups, classifyBusinesses)
-
-    const response = okResponse(groupedBusinesses)
+    const response = okResponse(businesses)
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {

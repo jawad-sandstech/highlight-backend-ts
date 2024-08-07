@@ -9,19 +9,19 @@ import favoriteBusinessControllers from '../../controllers/athletes/favoriteBusi
 
 const router = express.Router({ mergeParams: true })
 
+router.get(
+  '/',
+  authRequired(),
+  rolesRequired(['ATHLETE']),
+  validateRequest(favoriteBusinessValidations.getAllFavoriteBusinesses),
+  favoriteBusinessControllers.getAllFavoriteBusinesses
+)
 router.post(
   '/',
   authRequired(),
   rolesRequired(['ATHLETE']),
-  validateRequest(favoriteBusinessValidations.markAsFavorite),
-  favoriteBusinessControllers.markAsFavorite
-)
-router.delete(
-  '/:businessId',
-  authRequired(),
-  rolesRequired(['ATHLETE']),
-  validateRequest(favoriteBusinessValidations.deleteAsFavorite),
-  favoriteBusinessControllers.deleteAsFavorite
+  validateRequest(favoriteBusinessValidations.toggleMarkAsFavorite),
+  favoriteBusinessControllers.toggleMarkAsFavorite
 )
 
 export default router

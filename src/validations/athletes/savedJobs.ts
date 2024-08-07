@@ -6,7 +6,7 @@ const getMySavedJobs = Joi.object({
   body: Joi.object({})
 })
 
-const savedJob = Joi.object({
+const toggleSavedJob = Joi.object({
   query: Joi.object({}),
   params: Joi.object({}),
   body: Joi.object({
@@ -14,16 +14,7 @@ const savedJob = Joi.object({
   })
 })
 
-const deleteSavedJob = Joi.object({
-  query: Joi.object({}),
-  params: Joi.object({
-    savedJobId: Joi.number().required()
-  }),
-  body: Joi.object({})
-})
-
 export default {
   getMySavedJobs,
-  savedJob,
-  deleteSavedJob
+  toggleSavedJob
 }

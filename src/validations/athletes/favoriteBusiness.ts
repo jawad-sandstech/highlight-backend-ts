@@ -1,6 +1,12 @@
 import Joi from 'joi'
 
-const markAsFavorite = Joi.object({
+const getAllFavoriteBusinesses = Joi.object({
+  query: Joi.object({}),
+  params: Joi.object({}),
+  body: Joi.object({})
+})
+
+const toggleMarkAsFavorite = Joi.object({
   query: Joi.object({}),
   params: Joi.object({}),
   body: Joi.object({
@@ -8,15 +14,7 @@ const markAsFavorite = Joi.object({
   })
 })
 
-const deleteAsFavorite = Joi.object({
-  query: Joi.object({}),
-  params: Joi.object({
-    businessId: Joi.number().required()
-  }),
-  body: Joi.object({})
-})
-
 export default {
-  markAsFavorite,
-  deleteAsFavorite
+  getAllFavoriteBusinesses,
+  toggleMarkAsFavorite
 }
