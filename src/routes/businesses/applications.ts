@@ -16,7 +16,7 @@ router.get(
   validateRequest(applicationsValidations.getAllApplications),
   applicationsControllers.getAllApplications
 )
-router.get(
+router.patch(
   '/:applicationId',
   authRequired(),
   rolesRequired(['BUSINESS']),
