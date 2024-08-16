@@ -48,6 +48,11 @@ type TResetPasswordBody = {
   newPassword: string
 }
 
+type TChangePasswordBody = {
+  oldPassword: string
+  newPassword: string
+}
+
 type TVerifyOtpBody = {
   email: string
   otp: string
@@ -289,6 +294,54 @@ const resetPassword = async (
   }
 }
 
+const changePassword = async (
+  req: AuthRequest<unknown, unknown, TChangePasswordBody>,
+  res: Response
+): Promise<Response> => {
+  const { oldPassword, newPassword } = req.body
+  const user = req.user
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    const user = await prisma.users.findUnique({
+      where: { id: userId },
+      include: { UserPasswords: { where: { isActive: true } } }
+    })
+
+    if (user === null) {
+      const response = notFoundResponse('User not found')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (oldPassword !== user.UserPasswords[0].password) {
+      const response = unauthorizedResponse('incorrect old password')
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.userPasswords.updateMany({ where: { userId }, data: { isActive: false } })
+
+    await prisma.userPasswords.create({ data: { userId, password: newPassword } })
+
+    const response = updateSuccessResponse(null, 'password change successfully')
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
 const verifyOtp = async (
   req: AuthRequest<unknown, unknown, TVerifyOtpBody>,
   res: Response
@@ -382,6 +435,7 @@ export default {
   login,
   forgotPassword,
   resetPassword,
+  changePassword,
   verifyOtp,
   resendOtp
 }

@@ -145,7 +145,11 @@ const getAllJobs = async (
           }
         }
       },
-      include: { User: true, UserSavedJobs: { where: { userId } } }
+      include: {
+        User: true,
+        UserSavedJobs: { where: { userId } },
+        JobApplications: { where: { userId } }
+      }
     })
 
     const response = okResponse(jobs)
@@ -167,6 +171,14 @@ const getSingleJob = async (
   res: Response
 ): Promise<Response> => {
   const jobId = Number(req.params.jobId)
+  const user = req.user
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
 
   try {
     const job = await prisma.jobs.findUnique({
@@ -175,7 +187,10 @@ const getSingleJob = async (
         User: true,
         Sport: true,
         JobRequiredQualifications: true,
-        UserSavedJobs: true
+        UserSavedJobs: true,
+        JobApplications: {
+          where: { userId }
+        }
       }
     })
 

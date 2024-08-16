@@ -31,7 +31,7 @@ const onboardingSuccess = async (
   } catch (error) {
     if (error instanceof Error) {
       console.error(error.message)
-      const response = serverErrorResponse(error.message)
+      const response = okResponse()
       return res.status(response.status.code).json(response)
     } else {
       const response = serverErrorResponse('An unexpected error occurred')

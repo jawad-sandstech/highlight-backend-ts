@@ -28,7 +28,8 @@ const getAllOngoingJobs = async (req: AuthRequest, res: Response): Promise<Respo
 
   try {
     const ongoingJobs = await prisma.jobApplications.findMany({
-      where: { userId, status: 'HIRED' }
+      where: { userId, status: 'HIRED' },
+      include: { Job: true }
     })
 
     const response = okResponse(ongoingJobs)

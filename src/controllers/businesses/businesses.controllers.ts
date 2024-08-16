@@ -1,4 +1,9 @@
-import { okResponse, serverErrorResponse, notFoundResponse } from 'generic-response'
+import {
+  okResponse,
+  serverErrorResponse,
+  notFoundResponse,
+  unauthorizedResponse
+} from 'generic-response'
 
 import prisma from '../../config/database.config'
 
@@ -6,7 +11,8 @@ import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
 
 type TGetAllBusinessParams = {
-  isPremium: string
+  isPremium?: string
+  favorite?: string
 }
 
 type TGetSingleBusinessParams = {
@@ -17,18 +23,34 @@ const getAllBusinesses = async (
   req: AuthRequest<unknown, unknown, unknown, TGetAllBusinessParams>,
   res: Response
 ): Promise<Response> => {
-  const isPremium = req.query.isPremium
+  const { isPremium, favorite } = req.query
+  const user = req.user
 
-  const whereClause: any = { role: 'BUSINESS' }
-
-  if (isPremium === 'true') {
-    whereClause.BusinessInfo = { isPremium: true }
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
   }
 
+  const { userId } = user
+
   try {
+    const whereClause: any = { role: 'BUSINESS' }
+
+    if (isPremium === 'true') {
+      whereClause.BusinessInfo = { isPremium: true }
+    }
+
+    if (favorite === 'true') {
+      whereClause.FavoriteBusinesses = {
+        some: {
+          userId
+        }
+      }
+    }
+
     const businesses = await prisma.users.findMany({
       where: whereClause,
-      include: { BusinessInfo: true }
+      include: { BusinessInfo: true, FavoriteBusinesses: { where: { userId } } }
     })
 
     const response = okResponse(businesses)

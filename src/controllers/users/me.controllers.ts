@@ -148,8 +148,8 @@ const stripeOnboard = async (req: AuthRequest, res: Response): Promise<Response>
 
     const accountLink = await stripe.accountLinks.create({
       account: user.stripeAccountId,
-      refresh_url: `${process.env.BACKEND_URL}/status`,
-      return_url: `${process.env.BACKEND_URL}/api/v1/stripe/onboarding-success?accountId=${user.stripeAccountId}`,
+      refresh_url: `${config.BACKEND_URL}/stripeError.html`,
+      return_url: `${config.BACKEND_URL}/stripeSucess.html`,
       type: 'account_onboarding'
     })
 

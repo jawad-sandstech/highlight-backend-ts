@@ -50,6 +50,15 @@ const resetPassword = Joi.object({
   })
 })
 
+const changePassword = Joi.object({
+  query: Joi.object({}),
+  params: Joi.object({}),
+  body: Joi.object({
+    oldPassword: Joi.string().required(),
+    newPassword: Joi.string().required()
+  })
+})
+
 const verifyOtp = Joi.object({
   query: Joi.object({}),
   params: Joi.object({}),
@@ -72,6 +81,7 @@ export default {
   login,
   forgotPassword,
   resetPassword,
+  changePassword,
   verifyOtp,
   resendOtp
 }

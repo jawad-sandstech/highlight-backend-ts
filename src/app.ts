@@ -9,7 +9,7 @@ const app = express()
 
 app.post('/api/v1/stripe-webhook', express.raw({ type: 'application/json' }), stripeWebhookHandler)
 
-app.use(express.static('uploads'))
+app.use(express.static('public'))
 app.use(express.json({ limit: '100mb' }))
 app.use(cors())
 app.use(reqResInspector())

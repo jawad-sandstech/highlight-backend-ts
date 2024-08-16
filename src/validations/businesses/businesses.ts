@@ -2,7 +2,8 @@ import Joi from 'joi'
 
 const getAllBusinesses = Joi.object({
   query: Joi.object({
-    isPremium: Joi.boolean().optional()
+    isPremium: Joi.boolean().optional(),
+    favorite: Joi.boolean().optional()
   }),
   params: Joi.object({}),
   body: Joi.object({})

@@ -21,6 +21,12 @@ router.post(
   validateRequest(authValidations.resetPassword),
   authControllers.resetPassword
 )
+router.post(
+  '/change-password',
+  authRequired(),
+  validateRequest(authValidations.changePassword),
+  authControllers.changePassword
+)
 router.post('/verify-otp', validateRequest(authValidations.verifyOtp), authControllers.verifyOtp)
 router.post('/resend-otp', validateRequest(authValidations.resendOtp), authControllers.resendOtp)
 
