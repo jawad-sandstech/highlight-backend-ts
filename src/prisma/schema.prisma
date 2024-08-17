@@ -62,6 +62,7 @@ model Users {
   ReceivedRatings          UserRating[]               @relation("Athlete")
   OrganizedSchedules       UserSchedules[]            @relation("OrganizerSchedules")
   AttendedSchedules        UserSchedules[]            @relation("AttendeeSchedules")
+  MessageStatus            MessageStatus[]
 }
 
 model AthleteInfo {
@@ -275,22 +276,33 @@ model Chats {
 }
 
 model Participants {
-  id     Int   @id @default(autoincrement())
-  chatId Int
-  userId Int
-  Chat   Chats @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  User   Users @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      Int     @id @default(autoincrement())
+  chatId  Int
+  userId  Int
+  isAdmin Boolean @default(false)
+  Chat    Chats   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  User    Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Messages {
-  id         Int      @id @default(autoincrement())
-  chatId     Int
-  senderId   Int
-  attachment String?
-  content    String?  @db.Text
-  createdAt  DateTime @default(now())
-  Chat       Chats    @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  User       Users    @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  id            Int             @id @default(autoincrement())
+  chatId        Int
+  senderId      Int
+  attachment    String?
+  content       String?         @db.Text
+  createdAt     DateTime        @default(now())
+  Chat          Chats           @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  User          Users           @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  MessageStatus MessageStatus[]
+}
+
+model MessageStatus {
+  id        Int      @id @default(autoincrement())
+  messageId Int
+  userId    Int
+  seen      Boolean  @default(false)
+  Message   Messages @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSchedules {

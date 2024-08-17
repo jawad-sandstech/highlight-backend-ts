@@ -154,7 +154,6 @@ const updateStatusOfApplications = async (
 
       const chat = await prisma.chats.create({
         data: {
-          name: application.Job.title,
           type: 'PRIVATE',
           Participants: {
             createMany: {
@@ -168,7 +167,10 @@ const updateStatusOfApplications = async (
         data: {
           chatId: chat.id,
           senderId: userId,
-          content: "Let's go!!!"
+          content: "Let's make this collaboration epic!",
+          MessageStatus: {
+            create: { userId: application.userId }
+          }
         }
       })
     }

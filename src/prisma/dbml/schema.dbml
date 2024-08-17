@@ -49,6 +49,7 @@ Table Users {
   ReceivedRatings UserRating [not null]
   OrganizedSchedules UserSchedules [not null]
   AttendedSchedules UserSchedules [not null]
+  MessageStatus MessageStatus [not null]
 }
 
 Table AthleteInfo {
@@ -265,6 +266,7 @@ Table Participants {
   id Int [pk, increment]
   chatId Int [not null]
   userId Int [not null]
+  isAdmin Boolean [not null, default: false]
   Chat Chats [not null]
   User Users [not null]
 }
@@ -277,6 +279,16 @@ Table Messages {
   content String
   createdAt DateTime [default: `now()`, not null]
   Chat Chats [not null]
+  User Users [not null]
+  MessageStatus MessageStatus [not null]
+}
+
+Table MessageStatus {
+  id Int [pk, increment]
+  messageId Int [not null]
+  userId Int [not null]
+  seen Boolean [not null, default: false]
+  Message Messages [not null]
   User Users [not null]
 }
 
@@ -443,6 +455,10 @@ Ref: Participants.userId > Users.id [delete: Cascade]
 Ref: Messages.chatId > Chats.id [delete: Cascade]
 
 Ref: Messages.senderId > Users.id [delete: Cascade]
+
+Ref: MessageStatus.messageId > Messages.id [delete: Cascade]
+
+Ref: MessageStatus.userId > Users.id [delete: Cascade]
 
 Ref: UserSchedules.organizerId > Users.id [delete: Cascade]
 
