@@ -43,10 +43,32 @@ const createMessage = Joi.object({
   })
 })
 
+const addMembersInGroup = Joi.object({
+  query: Joi.object({}),
+  params: Joi.object({
+    chatId: Joi.number().required()
+  }),
+  body: Joi.object({
+    memberIds: Joi.array().items(Joi.number()).min(1).required()
+  })
+})
+
+const removeMembersFromGroup = Joi.object({
+  query: Joi.object({}),
+  params: Joi.object({
+    chatId: Joi.number().required()
+  }),
+  body: Joi.object({
+    memberIds: Joi.array().items(Joi.number()).min(1).required()
+  })
+})
+
 export default {
   getAllChats,
   getAllMessages,
   createPrivateChat,
   createGroupChat,
-  createMessage
+  createMessage,
+  addMembersInGroup,
+  removeMembersFromGroup
 }

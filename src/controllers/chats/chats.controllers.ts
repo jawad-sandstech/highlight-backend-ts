@@ -5,7 +5,8 @@ import {
   unauthorizedResponse,
   notFoundResponse,
   createSuccessResponse,
-  badRequestResponse
+  badRequestResponse,
+  updateSuccessResponse
 } from 'generic-response'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 
@@ -42,6 +43,22 @@ type TCreateMessageBody = {
   content: string
 }
 
+type TAddMembersInGroupParams = {
+  chatId: string
+}
+
+type TAddMembersInGroupBody = {
+  memberIds: number[]
+}
+
+type TRemoveMembersFromGroupParams = {
+  chatId: string
+}
+
+type TRemoveMembersFromGroupBody = {
+  memberIds: number[]
+}
+
 const isUserParticipant = (participants: Participants[], userId: number): boolean => {
   return participants.some((participant: any) => participant.userId === userId)
 }
@@ -50,6 +67,10 @@ const augmentMessageWithImageUrls = (message: Messages): Messages => {
   message.attachment &&= config.S3_ACCESS_URL + message.attachment
 
   return message
+}
+
+const isGroupAdmin = (userId: number, participants: Participants[]): boolean => {
+  return participants.some((participant) => participant.userId === userId && participant.isAdmin)
 }
 
 const getAllChats = async (
@@ -405,7 +426,11 @@ const createMessage = async (
         content,
         attachment: attachmentPath,
         MessageStatus: {
-          create: { userId: chat.Participants.find((i) => i.userId !== userId)?.userId! }
+          createMany: {
+            data: chat.Participants.filter((i) => i.userId !== userId).map((i) => ({
+              userId: i.userId
+            }))
+          }
         }
       }
     })
@@ -426,10 +451,184 @@ const createMessage = async (
   }
 }
 
+const addMembersInGroup = async (
+  req: AuthRequest<TAddMembersInGroupParams, unknown, TAddMembersInGroupBody>,
+  res: Response
+): Promise<Response> => {
+  const chatId = Number(req.params.chatId)
+  const { memberIds } = req.body
+  const user = req.user
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    const existingUsers = await prisma.users.findMany({
+      where: { id: { in: memberIds } }
+    })
+
+    const existingUserIds = existingUsers.map((user) => user.id)
+
+    const nonExistingUserIds = memberIds.filter((userId) => !existingUserIds.includes(userId))
+
+    if (nonExistingUserIds.length > 0) {
+      const response = notFoundResponse(`users with ids: ${nonExistingUserIds.join(',')} not found`)
+      return res.status(response.status.code).json(response)
+    }
+
+    const chat = await prisma.chats.findUnique({
+      where: { id: chatId },
+      include: { Participants: true }
+    })
+
+    if (chat === null) {
+      const response = notFoundResponse('chat not found')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (chat.type !== 'GROUP') {
+      const response = badRequestResponse('not a group')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (!isGroupAdmin(userId, chat.Participants)) {
+      const response = unauthorizedResponse('not a group admin')
+      return res.status(response.status.code).json(response)
+    }
+
+    const participantIds = chat.Participants.map((i) => i.userId)
+    const existingMembers = memberIds.filter((memberId) => participantIds.includes(memberId))
+
+    if (existingMembers.length > 0) {
+      const response = notFoundResponse(
+        `users with ids: ${existingMembers.join(',')} already in group`
+      )
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.participants.createMany({
+      data: memberIds.map((i) => ({ chatId, userId: i }))
+    })
+
+    await prisma.messages.createMany({
+      data: existingUsers.map((i) => ({
+        chatId,
+        senderId: userId,
+        content: `${i.email} was added`,
+        messageType: 'SYSTEM'
+      }))
+    })
+
+    const response = updateSuccessResponse()
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
+const removeMembersFromGroup = async (
+  req: AuthRequest<TRemoveMembersFromGroupParams, unknown, TRemoveMembersFromGroupBody>,
+  res: Response
+): Promise<Response> => {
+  const chatId = Number(req.params.chatId)
+  const { memberIds } = req.body
+  const user = req.user
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    const existingUsers = await prisma.users.findMany({
+      where: { id: { in: memberIds } }
+    })
+
+    const existingUserIds = existingUsers.map((user) => user.id)
+
+    const nonExistingUserIds = memberIds.filter((userId) => !existingUserIds.includes(userId))
+
+    if (nonExistingUserIds.length > 0) {
+      const response = notFoundResponse(`users with ids: ${nonExistingUserIds.join(',')} not found`)
+      return res.status(response.status.code).json(response)
+    }
+
+    const chat = await prisma.chats.findUnique({
+      where: { id: chatId },
+      include: { Participants: true }
+    })
+
+    if (chat === null) {
+      const response = notFoundResponse('chat not found')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (chat.type !== 'GROUP') {
+      const response = badRequestResponse('not a group')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (!isGroupAdmin(userId, chat.Participants)) {
+      const response = unauthorizedResponse('not a group admin')
+      return res.status(response.status.code).json(response)
+    }
+
+    const participantIds = chat.Participants.map((i) => i.userId)
+    const nonExistingMembers = memberIds.filter((memberId) => !participantIds.includes(memberId))
+
+    if (nonExistingMembers.length > 0) {
+      const response = notFoundResponse(
+        `users with ids: ${nonExistingMembers.join(',')} not found in the group`
+      )
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.participants.deleteMany({
+      where: { chatId, userId: { in: memberIds } }
+    })
+
+    await prisma.messages.createMany({
+      data: existingUsers.map((i) => ({
+        chatId,
+        senderId: userId,
+        content: `${i.email} was removed`,
+        messageType: 'SYSTEM'
+      }))
+    })
+
+    const response = updateSuccessResponse()
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
 export default {
   getAllChats,
   getAllMessages,
   createPrivateChat,
   createGroupChat,
-  createMessage
+  createMessage,
+  addMembersInGroup,
+  removeMembersFromGroup
 }

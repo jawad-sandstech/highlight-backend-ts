@@ -290,6 +290,7 @@ model Messages {
   senderId      Int
   attachment    String?
   content       String?         @db.Text
+  messageType   MESSAGE_TYPE    @default(TEXT)
   createdAt     DateTime        @default(now())
   Chat          Chats           @relation(fields: [chatId], references: [id], onDelete: Cascade)
   User          Users           @relation(fields: [senderId], references: [id], onDelete: Cascade)
@@ -406,4 +407,9 @@ enum ATHLETE_EXPERIENCE {
   RECREATIONAL
   SEMI_PROFESSIONAL
   PROFESSIONAL
+}
+
+enum MESSAGE_TYPE {
+  TEXT
+  SYSTEM
 }

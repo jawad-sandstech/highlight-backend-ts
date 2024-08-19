@@ -47,5 +47,19 @@ router.post(
   validateRequest(chatsValidations.createMessage),
   chatsControllers.createMessage
 )
+router.post(
+  '/:chatId/add-members',
+  authRequired(),
+  upload.single('attachment'),
+  validateRequest(chatsValidations.addMembersInGroup),
+  chatsControllers.addMembersInGroup
+)
+router.post(
+  '/:chatId/remove-members',
+  authRequired(),
+  upload.single('attachment'),
+  validateRequest(chatsValidations.removeMembersFromGroup),
+  chatsControllers.removeMembersFromGroup
+)
 
 export default router
