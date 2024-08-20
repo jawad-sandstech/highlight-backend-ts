@@ -276,12 +276,13 @@ model Chats {
 }
 
 model Participants {
-  id      Int     @id @default(autoincrement())
-  chatId  Int
-  userId  Int
-  isAdmin Boolean @default(false)
-  Chat    Chats   @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  User    Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       Int       @id @default(autoincrement())
+  chatId   Int
+  userId   Int
+  exitedAt DateTime?
+  isAdmin  Boolean   @default(false)
+  Chat     Chats     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  User     Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Messages {

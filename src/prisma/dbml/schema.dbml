@@ -266,6 +266,7 @@ Table Participants {
   id Int [pk, increment]
   chatId Int [not null]
   userId Int [not null]
+  exitedAt DateTime
   isAdmin Boolean [not null, default: false]
   Chat Chats [not null]
   User Users [not null]
@@ -277,6 +278,7 @@ Table Messages {
   senderId Int [not null]
   attachment String
   content String
+  messageType MESSAGE_TYPE [not null, default: 'TEXT']
   createdAt DateTime [default: `now()`, not null]
   Chat Chats [not null]
   User Users [not null]
@@ -398,6 +400,11 @@ Enum ATHLETE_EXPERIENCE {
   RECREATIONAL
   SEMI_PROFESSIONAL
   PROFESSIONAL
+}
+
+Enum MESSAGE_TYPE {
+  TEXT
+  SYSTEM
 }
 
 Ref: AthleteInfo.userId - Users.id [delete: Cascade]

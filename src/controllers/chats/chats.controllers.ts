@@ -95,9 +95,6 @@ const getAllChats = async (
           some: {
             userId
           }
-        },
-        Messages: {
-          some: {}
         }
       },
       include: {
@@ -105,34 +102,48 @@ const getAllChats = async (
           include: {
             User: true
           }
-        },
-        Messages: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-          include: {
-            _count: {
-              select: {
-                MessageStatus: {
-                  where: {
-                    userId,
-                    seen: false
-                  }
-                }
-              }
-            }
-          }
         }
       }
     })
 
-    const chatsWithName = chats.map((chat) => ({
-      ...chat,
-      name: chat.name ?? chat.Participants.find((i) => i.userId !== userId)?.User.fullName
-    }))
+    const chatsWithLastMessage = await Promise.all(
+      chats.map(async (chat) => {
+        const exitedAt = chat.Participants.find((i) => i.userId === userId)?.exitedAt ?? new Date()
 
-    const sortedChats = chatsWithName.sort((a, b) => {
-      const aLastMessageDate = a.Messages[0]?.createdAt?.getTime() ?? 0
-      const bLastMessageDate = b.Messages[0]?.createdAt?.getTime() ?? 0
+        const lastMessage = await prisma.messages.findFirst({
+          where: {
+            chatId: chat.id,
+            createdAt: {
+              lte: exitedAt
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        })
+
+        const unreadMessagesCount = await prisma.messages.count({
+          where: {
+            chatId: chat.id,
+            MessageStatus: {
+              some: {
+                userId,
+                seen: false
+              }
+            }
+          }
+        })
+
+        return {
+          ...chat,
+          lastMessage,
+          unreadMessagesCount,
+          name: chat.name ?? chat.Participants.find((i) => i.userId !== userId)?.User.fullName
+        }
+      })
+    )
+
+    const sortedChats = chatsWithLastMessage.sort((a, b) => {
+      const aLastMessageDate = a.lastMessage?.createdAt?.getTime() ?? 0
+      const bLastMessageDate = b.lastMessage?.createdAt?.getTime() ?? 0
       return bLastMessageDate - aLastMessageDate
     })
 
@@ -191,12 +202,23 @@ const getAllMessages = async (
       return res.status(response.status.code).json(response)
     }
 
-    if (!isUserParticipant(chat?.Participants, userId)) {
+    const participant = chat.Participants.find((i) => i.userId === userId)
+
+    if (participant === undefined) {
       const response = unauthorizedResponse()
       return res.status(response.status.code).json(response)
     }
 
-    const response = okResponse(chat)
+    const exitedAt = participant.exitedAt ?? new Date()
+
+    const messages = chat.Messages.filter((message) => message.createdAt <= exitedAt)
+
+    const chatWithMessages = {
+      ...chat,
+      Messages: messages
+    }
+
+    const response = okResponse(chatWithMessages)
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
@@ -482,7 +504,11 @@ const addMembersInGroup = async (
 
     const chat = await prisma.chats.findUnique({
       where: { id: chatId },
-      include: { Participants: true }
+      include: {
+        Participants: {
+          include: { User: true }
+        }
+      }
     })
 
     if (chat === null) {
@@ -500,25 +526,45 @@ const addMembersInGroup = async (
       return res.status(response.status.code).json(response)
     }
 
-    const participantIds = chat.Participants.map((i) => i.userId)
-    const existingMembers = memberIds.filter((memberId) => participantIds.includes(memberId))
+    const participants = chat.Participants
 
-    if (existingMembers.length > 0) {
-      const response = notFoundResponse(
-        `users with ids: ${existingMembers.join(',')} already in group`
+    const existingActiveMembers = memberIds.filter((memberId) =>
+      participants.some(
+        (participant) => participant.userId === memberId && participant.exitedAt === null
+      )
+    )
+
+    const reNewMemberIds = memberIds.filter((memberId) =>
+      participants.some(
+        (participant) => participant.userId === memberId && participant.exitedAt !== null
+      )
+    )
+
+    const newMemberIds = memberIds.filter(
+      (memberId) => !participants.some((participant) => participant.userId === memberId)
+    )
+
+    if (existingActiveMembers.length > 0) {
+      const response = badRequestResponse(
+        `users with ids: ${existingActiveMembers.join(',')} already in group`
       )
       return res.status(response.status.code).json(response)
     }
 
+    await prisma.participants.updateMany({
+      where: { userId: { in: reNewMemberIds } },
+      data: { exitedAt: null }
+    })
+
     await prisma.participants.createMany({
-      data: memberIds.map((i) => ({ chatId, userId: i }))
+      data: newMemberIds.map((id) => ({ chatId, userId: id }))
     })
 
     await prisma.messages.createMany({
-      data: existingUsers.map((i) => ({
+      data: participants.map((participant) => ({
         chatId,
         senderId: userId,
-        content: `${i.email} was added`,
+        content: `${participant.User.email} was added`,
         messageType: 'SYSTEM'
       }))
     })
@@ -596,8 +642,9 @@ const removeMembersFromGroup = async (
       return res.status(response.status.code).json(response)
     }
 
-    await prisma.participants.deleteMany({
-      where: { chatId, userId: { in: memberIds } }
+    await prisma.participants.updateMany({
+      where: { chatId, userId: { in: memberIds } },
+      data: { exitedAt: new Date() }
     })
 
     await prisma.messages.createMany({
