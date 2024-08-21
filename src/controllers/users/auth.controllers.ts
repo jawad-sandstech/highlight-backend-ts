@@ -8,6 +8,8 @@ import {
 } from 'generic-response'
 import moment from 'moment'
 import jwt from 'jsonwebtoken'
+import { OAuth2Client } from 'google-auth-library'
+import axios from 'axios'
 
 import config from '../../config/config'
 import prisma from '../../config/database.config'
@@ -60,6 +62,63 @@ type TVerifyOtpBody = {
 
 type TResendOtpBody = {
   email: string
+}
+
+const verifyGoogleToken = async (token: string): Promise<{ email: string }> => {
+  const client = new OAuth2Client(config.GOOGLE_CLIENT_ID)
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: config.GOOGLE_CLIENT_ID
+    })
+
+    const payload = ticket.getPayload()
+
+    if (payload === undefined) {
+      throw new Error('No payload found in the Google token.')
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return { email: payload.email! }
+  } catch (error) {
+    throw new Error('Error verifying Google token')
+  }
+}
+
+const verifyFacebookToken = async (token: string): Promise<{ email: string }> => {
+  try {
+    const response = await axios.get(`https://graph.facebook.com/me?access_token=${token}`)
+
+    const { email } = response.data
+    return { email }
+  } catch (error) {
+    throw new Error('Error verifying Facebook token')
+  }
+}
+
+const verifyAppleToken = async (token: string): Promise<{ email: string }> => {
+  try {
+    type TDecodedToken = {
+      header: any
+      payload: any
+    }
+
+    const decodedToken = jwt.decode(token, { complete: true })
+    const { header, payload } = decodedToken as TDecodedToken
+
+    if (
+      header.alg !== 'RS256' ||
+      payload.iss !== 'https://appleid.apple.com' ||
+      payload.aud !== 'com.your.app.bundleId' ||
+      Date.now() >= payload.exp * 1000
+    ) {
+      throw new Error('Invalid Apple token')
+    }
+    return { email: payload.email }
+  } catch (error) {
+    throw new Error('Error verifying Google token')
+  }
 }
 
 const generateOTP = (): string => {
@@ -183,12 +242,134 @@ const login = async (
 
       const response = okResponse({ token, user: payload }, 'Login Success.')
       return res.status(response.status.code).json(response)
-    } else if (
-      loginData.loginMethod === 'APPLE' ||
-      loginData.loginMethod === 'FACEBOOK' ||
-      loginData.loginMethod === 'GOOGLE'
-    ) {
-      const response = okResponse(null, 'Login Success with OAth.')
+    } else if (loginData.loginMethod === 'GOOGLE') {
+      const { role, tokenSecret } = loginData
+
+      const tokenData = await verifyGoogleToken(tokenSecret)
+
+      const { email } = tokenData
+
+      let user = await prisma.users.findFirst({
+        where: { email }
+      })
+
+      if (user?.role !== role) {
+        const response = badRequestResponse('User already have an account.')
+        return res.status(response.status.code).json(response)
+      }
+
+      if (user !== null) {
+        const payload = {
+          userId: user.id,
+          role: user.role
+        }
+
+        const token = jwt.sign(payload, config.JWT_SECRET)
+
+        const response = okResponse({ token, user: payload }, 'Login Success.')
+        return res.status(response.status.code).json(response)
+      }
+
+      user = await userService.createUser({
+        loginMethod: 'GOOGLE',
+        role,
+        email
+      })
+
+      const payload = {
+        userId: user.id,
+        role: user.role
+      }
+
+      const token = jwt.sign(payload, config.JWT_SECRET)
+
+      const response = okResponse({ token, user: payload }, 'Login Success.')
+      return res.status(response.status.code).json(response)
+    } else if (loginData.loginMethod === 'FACEBOOK') {
+      const { role, tokenSecret } = loginData
+
+      const tokenData = await verifyFacebookToken(tokenSecret)
+
+      const { email } = tokenData
+
+      let user = await prisma.users.findFirst({
+        where: { email }
+      })
+
+      if (user?.role !== role) {
+        const response = badRequestResponse('User already have an account.')
+        return res.status(response.status.code).json(response)
+      }
+
+      if (user !== null) {
+        const payload = {
+          userId: user.id,
+          role: user.role
+        }
+
+        const token = jwt.sign(payload, config.JWT_SECRET)
+
+        const response = okResponse({ token, user: payload }, 'Login Success.')
+        return res.status(response.status.code).json(response)
+      }
+
+      user = await userService.createUser({
+        loginMethod: 'FACEBOOK',
+        role,
+        email
+      })
+
+      const payload = {
+        userId: user.id,
+        role: user.role
+      }
+
+      const token = jwt.sign(payload, config.JWT_SECRET)
+
+      const response = okResponse({ token, user: payload }, 'Login Success.')
+      return res.status(response.status.code).json(response)
+    } else if (loginData.loginMethod === 'APPLE') {
+      const { role, tokenSecret } = loginData
+
+      const tokenData = await verifyAppleToken(tokenSecret)
+
+      const { email } = tokenData
+
+      let user = await prisma.users.findFirst({
+        where: { email }
+      })
+
+      if (user?.role !== role) {
+        const response = badRequestResponse('User already have an account.')
+        return res.status(response.status.code).json(response)
+      }
+
+      if (user !== null) {
+        const payload = {
+          userId: user.id,
+          role: user.role
+        }
+
+        const token = jwt.sign(payload, config.JWT_SECRET)
+
+        const response = okResponse({ token, user: payload }, 'Login Success.')
+        return res.status(response.status.code).json(response)
+      }
+
+      user = await userService.createUser({
+        loginMethod: 'GOOGLE',
+        role,
+        email
+      })
+
+      const payload = {
+        userId: user.id,
+        role: user.role
+      }
+
+      const token = jwt.sign(payload, config.JWT_SECRET)
+
+      const response = okResponse({ token, user: payload }, 'Login Success.')
       return res.status(response.status.code).json(response)
     } else {
       const response = badRequestResponse('Unsupported login method.')

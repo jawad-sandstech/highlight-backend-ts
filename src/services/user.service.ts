@@ -5,17 +5,23 @@ import type { USER_ROLES, Users } from '@prisma/client'
 
 type TCreateUser = {
   role: USER_ROLES
-} & (
-  | {
-      loginMethod: 'EMAIL'
-      email: string
+  loginMethod: 'EMAIL' | 'GOOGLE' | 'FACEBOOK' | 'APPLE'
+  email: string
+  password?: string
+}
+
+type UserData = {
+  role: USER_ROLES
+  email: string
+  loginMethod: 'EMAIL' | 'GOOGLE' | 'FACEBOOK' | 'APPLE'
+  stripeCustomerId: string
+  stripeAccountId: string | null
+  UserPasswords?: {
+    create: {
       password: string
     }
-  | {
-      loginMethod: 'GOOGLE' | 'FACEBOOK' | 'APPLE'
-      tokenSecret: string
-    }
-)
+  }
+}
 
 const createStripeAccount = async (email: string): Promise<string> => {
   try {
@@ -46,48 +52,42 @@ const createStripeCustomer = async (email: string): Promise<string> => {
 
 const createUser = async (data: TCreateUser): Promise<Users> => {
   try {
-    if (data.loginMethod === 'EMAIL') {
-      const { role, email, password, loginMethod } = data
+    const { role, email, password, loginMethod } = data
 
-      const stripeCustomerId = await createStripeCustomer(email)
-      const stripeAccountId = role === 'ATHLETE' ? await createStripeAccount(email) : null
+    const stripeCustomerId = await createStripeCustomer(email)
+    const stripeAccountId = role === 'ATHLETE' ? await createStripeAccount(email) : null
 
-      const user = await prisma.users.create({
-        data: {
-          role,
-          email,
-          loginMethod,
-          stripeCustomerId,
-          stripeAccountId,
-          UserPasswords: { create: { password } }
-        }
-      })
+    const userData: UserData = {
+      role,
+      email,
+      loginMethod,
+      stripeCustomerId,
+      stripeAccountId
+    }
 
-      await prisma.userPreference.create({
+    if (password !== undefined) {
+      userData.UserPasswords = { create: { password } }
+    }
+
+    const user = await prisma.users.create({ data: userData })
+
+    await prisma.userPreference.create({
+      data: { userId: user.id }
+    })
+
+    if (role === 'ATHLETE') {
+      await prisma.athleteInfo.create({
         data: { userId: user.id }
       })
-
-      if (role === 'ATHLETE') {
-        await prisma.athleteInfo.create({
-          data: { userId: user.id }
-        })
-      } else {
-        await prisma.businessInfo.create({
-          data: { userId: user.id }
-        })
-      }
-
-      return user
-      // else if (
-      //   data.loginMethod === 'APPLE' ||
-      //   data.loginMethod === 'FACEBOOK' ||
-      //   data.loginMethod === 'GOOGLE'
-      // ) {}
     } else {
-      throw new Error('Invalid Login Method while creating user')
+      await prisma.businessInfo.create({
+        data: { userId: user.id }
+      })
     }
+
+    return user
   } catch (error) {
-    throw new Error('Failed to create user')
+    throw new Error('Failed to create new user')
   }
 }
 

@@ -22,7 +22,9 @@ const config = {
   S3_BUCKET_REGION: process.env.S3_BUCKET_REGION!,
   S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID!,
   S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY!,
-  S3_ACCESS_URL: process.env.S3_ACCESS_URL!
+  S3_ACCESS_URL: process.env.S3_ACCESS_URL!,
+
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID!
 }
 
 export default config
