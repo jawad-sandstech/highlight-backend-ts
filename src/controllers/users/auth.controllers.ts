@@ -253,9 +253,11 @@ const login = async (
         where: { email }
       })
 
-      if (user?.role !== role) {
-        const response = badRequestResponse('User already have an account.')
-        return res.status(response.status.code).json(response)
+      if (user !== null) {
+        if (user.role !== role) {
+          const response = badRequestResponse('User already have an account.')
+          return res.status(response.status.code).json(response)
+        }
       }
 
       if (user !== null) {

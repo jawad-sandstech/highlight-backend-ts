@@ -7,7 +7,7 @@ import prisma from '../config/database.config'
 import type { Response, NextFunction } from 'express'
 import type { AuthRequest } from '../interfaces/auth-request'
 
-type DecodedUser = {
+type TDecodedUser = {
   userId: number
 }
 
@@ -30,7 +30,7 @@ const authRequired = (roleRequired = true) => {
     token = token.split(' ')[1]
 
     try {
-      const decodedUser = jwt.verify(token, config.JWT_SECRET) as DecodedUser
+      const decodedUser = jwt.verify(token, config.JWT_SECRET) as TDecodedUser
 
       const user = await prisma.users.findUnique({ where: { id: decodedUser.userId } })
 
