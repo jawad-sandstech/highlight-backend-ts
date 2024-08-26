@@ -26,12 +26,9 @@ const handleConnection = async (socket: Socket): Promise<void> => {
 
     socket.userId = decodedToken.userId
     global.connectedSockets[socket.id] = socket
-
-    await markUserAsOnline(socket.user.id)
   } catch (error) {
-    logger.error(`JWT verification failed: ${error.message}`)
     socket.disconnect(true)
   }
 }
 
-module.exports = handleConnection
+export default handleConnection

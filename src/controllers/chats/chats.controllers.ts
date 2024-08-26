@@ -13,7 +13,7 @@ import { PutObjectCommand } from '@aws-sdk/client-s3'
 import s3 from '../../config/s3.config'
 import prisma from '../../config/database.config'
 
-import type { Messages, Participants } from '@prisma/client'
+import type { Chats, Messages, Participants } from '@prisma/client'
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import config from '../../config/config'
@@ -59,8 +59,21 @@ type TRemoveMembersFromGroupBody = {
   memberIds: number[]
 }
 
-const isUserParticipant = (participants: Participants[], userId: number): boolean => {
-  return participants.some((participant: any) => participant.userId === userId)
+type TChatWithParticipants = Chats & {
+  Participants: Participants[]
+}
+
+const userHasAccessToChat = (userId: number, chat: TChatWithParticipants): boolean => {
+  if (chat.type === 'PRIVATE') {
+    return chat.Participants.some((participant) => participant.userId === userId)
+  }
+
+  if (chat.type === 'GROUP') {
+    const participant = chat.Participants.find((i) => i.userId === userId)
+    return participant !== undefined && participant.exitedAt === null
+  }
+
+  return false
 }
 
 const augmentMessageWithImageUrls = (message: Messages): Messages => {
@@ -430,7 +443,7 @@ const createMessage = async (
       return res.status(response.status.code).json(response)
     }
 
-    if (!isUserParticipant(chat?.Participants, userId)) {
+    if (!userHasAccessToChat(userId, chat)) {
       const response = unauthorizedResponse()
       return res.status(response.status.code).json(response)
     }
@@ -446,18 +459,16 @@ const createMessage = async (
         chatId,
         senderId: userId,
         content,
-        attachment: attachmentPath,
-        MessageStatus: {
-          createMany: {
-            data: chat.Participants.filter((i) => i.userId !== userId).map((i) => ({
-              userId: i.userId
-            }))
-          }
-        }
+        attachment: attachmentPath
       }
     })
 
     const messageWithImageUrls = augmentMessageWithImageUrls(message)
+
+    if (global.socketIo !== null) {
+      const roomUsers = await global.socketIo.in(`chat-${chatId}`).fetchSockets()
+      console.log('roomUsers', roomUsers)
+    }
 
     const response = createSuccessResponse(messageWithImageUrls)
     return res.status(response.status.code).json(response)

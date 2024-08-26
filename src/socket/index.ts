@@ -1,11 +1,13 @@
 import { Server } from 'socket.io'
 
-const connectSocketHandler = require('./handlers/connectSocketHandler')
-const joinChatHandler = require('./handlers/joinChatHandler')
-const disconnectSocketHandler = require('./handlers/disconnectSocketHandler')
-const updateLocationHandler = require('./handlers/updateLocationHandler')
+import type { Server as HttpServer } from 'http'
 
-const createSocketConnection = (server) => {
+import connectionHandler from './handlers/connectionHandler'
+import joinChatHandler from './handlers/joinChatHandler'
+import leaveChatHandler from './handlers/leaveChatHandler'
+import disconnectHandler from './handlers/disconnectHandler'
+
+const createSocketConnection = (server: HttpServer): void => {
   global.connectedSockets = {}
   global.socketIo = null
 
@@ -19,21 +21,20 @@ const createSocketConnection = (server) => {
   })
 
   global.socketIo.on('connection', (socket) => {
-    connectSocketHandler(socket)
+    void connectionHandler(socket)
 
-    socket.on('joinChat', (chatId) => {
-      joinChatHandler(socket, Number(chatId))
+    socket.on('joinChat', (chatId: string) => {
+      void joinChatHandler(socket, Number(chatId))
     })
 
-    socket.on('updateLocation', (data) => {
-      const parsedData = JSON.parse(data)
-      updateLocationHandler(socket, parsedData)
+    socket.on('leaveChat', (chatId: string) => {
+      void leaveChatHandler(socket, Number(chatId))
     })
 
     socket.on('disconnect', () => {
-      disconnectSocketHandler(socket)
+      disconnectHandler(socket)
     })
   })
 }
 
-module.exports = createSocketConnection
+export default createSocketConnection
