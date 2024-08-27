@@ -20,8 +20,8 @@ const createSocketConnection = (server: HttpServer): void => {
     }
   })
 
-  global.socketIo.on('connection', (socket) => {
-    void connectionHandler(socket)
+  global.socketIo.on('connection', async (socket) => {
+    await connectionHandler(socket)
 
     socket.on('joinChat', (chatId: string) => {
       void joinChatHandler(socket, Number(chatId))

@@ -10,8 +10,11 @@ type TDecodedUser = {
 
 const authenticateUser = async (socket: Socket): Promise<string | jwt.JwtPayload> => {
   const authorizationHeader = socket.handshake.headers.authorization
-  const token = authorizationHeader?.split(' ')[1]
+  if (authorizationHeader === undefined) throw new Error('No token')
 
+  const [tokenFormat, token] = authorizationHeader.split(' ')
+
+  if (tokenFormat !== 'Bearer') throw new Error('Invalid token format')
   if (token === undefined) throw new Error('No token provided')
 
   const decodedToken = jwt.verify(token, config.JWT_SECRET)
@@ -19,14 +22,21 @@ const authenticateUser = async (socket: Socket): Promise<string | jwt.JwtPayload
 }
 
 const handleConnection = async (socket: Socket): Promise<void> => {
-  console.log('a user connected', socket.id)
-
   try {
-    const decodedToken = (await authenticateUser(socket)) as TDecodedUser
+    console.log('a user connected', socket.id)
 
-    socket.userId = decodedToken.userId
-    global.connectedSockets[socket.id] = socket
+    const decodedToken = await authenticateUser(socket)
+    const { userId } = decodedToken as TDecodedUser
+
+    socket.userId = userId
+    global.connectedSockets[userId] = socket
   } catch (error) {
+    if (error instanceof Error) {
+      socket.emit('error', error.message)
+    } else {
+      socket.emit('error', 'An unexpected error occurred.')
+    }
+
     socket.disconnect(true)
   }
 }

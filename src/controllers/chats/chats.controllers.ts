@@ -86,6 +86,13 @@ const isGroupAdmin = (userId: number, participants: Participants[]): boolean => 
   return participants.some((participant) => participant.userId === userId && participant.isAdmin)
 }
 
+// const getRoomUserIds = async (chatId: number): Promise<number[] | undefined> => {
+//   const roomUsers = await global.socketIo?.in(`chat-${chatId}`).fetchSockets()
+//   const roomUserIds = roomUsers?.map((socket) => (socket as any).id)
+
+//   return roomUserIds
+// }
+
 const getAllChats = async (
   req: AuthRequest<unknown, unknown, unknown, TGetAllChatsQuery>,
   res: Response
@@ -146,10 +153,11 @@ const getAllChats = async (
         })
 
         return {
-          ...chat,
+          id: chat.id,
+          type: chat.type,
+          name: chat.name ?? chat.Participants.find((i) => i.userId !== userId)?.User.fullName,
           lastMessage,
-          unreadMessagesCount,
-          name: chat.name ?? chat.Participants.find((i) => i.userId !== userId)?.User.fullName
+          unreadMessagesCount
         }
       })
     )
@@ -466,8 +474,40 @@ const createMessage = async (
     const messageWithImageUrls = augmentMessageWithImageUrls(message)
 
     if (global.socketIo !== null) {
-      const roomUsers = await global.socketIo.in(`chat-${chatId}`).fetchSockets()
-      console.log('roomUsers', roomUsers)
+      const activeRoomSockets = await global.socketIo?.in(`chat-${chatId}`).fetchSockets()
+      const activeRoomUserIds = activeRoomSockets?.map((socket) => (socket as any).userId)
+      const inactiveRoomUserIds = chat.Participants.filter(
+        (i) => !activeRoomUserIds.includes(i.userId)
+      ).map((i) => i.userId)
+      const inactiveSockets = inactiveRoomUserIds.map((i) => global.connectedSockets[i])
+
+      console.log({ activeRoomSockets, activeRoomUserIds, inactiveRoomUserIds, inactiveSockets })
+
+      global.socketIo.to(`chat-${chatId}`).emit('newMessage', JSON.stringify(message))
+
+      for (const socket of inactiveSockets) {
+        const unreadMessagesCount = await prisma.messages.count({
+          where: {
+            chatId,
+            MessageStatus: {
+              some: {
+                userId: socket.userId,
+                seen: false
+              }
+            }
+          }
+        })
+
+        const chatSummary = {
+          id: chat.id,
+          type: chat.type,
+          name: chat.name ?? chat.Participants.find((i) => i.userId !== userId)?.User.fullName,
+          lastMessage: content,
+          unreadMessagesCount
+        }
+
+        socket.emit('updateChat', chatSummary)
+      }
     }
 
     const response = createSuccessResponse(messageWithImageUrls)

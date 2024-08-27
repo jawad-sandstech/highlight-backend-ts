@@ -1,9 +1,9 @@
 /* eslint-disable no-var */
 
-import type { Server as SocketIOServer } from 'socket.io'
+import type { Server as SocketIOServer, Socket } from 'socket.io'
 
 declare global {
-  var connectedSockets: Record<string, any>
+  var connectedSockets: Record<number, Socket>
   var socketIo: SocketIOServer | null
 }
 

@@ -107,5 +107,5 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   "include": ["src/**/*"],
-  "files": ["src/types/global.d.ts"]
+  "files": ["src/types/global.d.ts", "src/types/socket.d.ts"]
 }
