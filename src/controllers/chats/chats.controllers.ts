@@ -13,7 +13,7 @@ import { PutObjectCommand } from '@aws-sdk/client-s3'
 import s3 from '../../config/s3.config'
 import prisma from '../../config/database.config'
 
-import type { Chats, Messages, Participants } from '@prisma/client'
+import type { Chats, Messages, Participants, Users } from '@prisma/client'
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import config from '../../config/config'
@@ -63,6 +63,14 @@ type TChatWithParticipants = Chats & {
   Participants: Participants[]
 }
 
+type TParticipantWithDetails = Participants & {
+  User: Users
+}
+
+type TChatWithParticipantDetails = Chats & {
+  Participants: TParticipantWithDetails[]
+}
+
 const userHasAccessToChat = (userId: number, chat: TChatWithParticipants): boolean => {
   if (chat.type === 'PRIVATE') {
     return chat.Participants.some((participant) => participant.userId === userId)
@@ -92,6 +100,55 @@ const isGroupAdmin = (userId: number, participants: Participants[]): boolean => 
 
 //   return roomUserIds
 // }
+
+const handleSocketIOCommunication = async (
+  chatId: number,
+  message: Messages,
+  chat: TChatWithParticipantDetails,
+  userId: number
+): Promise<void> => {
+  if (global.socketIo !== null) {
+    const participants = chat.Participants
+
+    const activeRoomSockets = await global.socketIo?.in(`chat-${chatId}`).fetchSockets()
+    const activeRoomUserIds = activeRoomSockets?.map((socket) => (socket as any).userId)
+
+    const inactiveRoomUserIds = participants
+      .filter((i) => !activeRoomUserIds.includes(i.userId))
+      .map((i) => i.userId)
+    const inactiveSockets = inactiveRoomUserIds.map((i) => global.connectedSockets[i])
+
+    await prisma.messageStatus.createMany({
+      data: inactiveRoomUserIds.map((i) => ({ userId: i, messageId: message.id }))
+    })
+
+    global.socketIo.to(`chat-${chatId}`).emit('newMessage', JSON.stringify(message))
+
+    for (const socket of inactiveSockets) {
+      const unreadMessagesCount = await prisma.messages.count({
+        where: {
+          chatId,
+          MessageStatus: {
+            some: {
+              userId: socket.userId,
+              seen: false
+            }
+          }
+        }
+      })
+
+      const chatSummary = {
+        id: chat.id,
+        type: chat.type,
+        name: chat.name ?? chat.Participants.find((i) => i.userId !== userId)?.User.fullName,
+        lastMessage: message.content,
+        unreadMessagesCount
+      }
+
+      socket.emit('updateChat', chatSummary)
+    }
+  }
+}
 
 const getAllChats = async (
   req: AuthRequest<unknown, unknown, unknown, TGetAllChatsQuery>,
@@ -473,45 +530,7 @@ const createMessage = async (
 
     const messageWithImageUrls = augmentMessageWithImageUrls(message)
 
-    if (global.socketIo !== null) {
-      const activeRoomSockets = await global.socketIo?.in(`chat-${chatId}`).fetchSockets()
-      const activeRoomUserIds = activeRoomSockets?.map((socket) => (socket as any).userId)
-      const inactiveRoomUserIds = chat.Participants.filter(
-        (i) => !activeRoomUserIds.includes(i.userId)
-      ).map((i) => i.userId)
-
-      await prisma.messageStatus.createMany({
-        data: inactiveRoomUserIds.map((i) => ({ userId: i, messageId: message.id }))
-      })
-
-      const inactiveSockets = inactiveRoomUserIds.map((i) => global.connectedSockets[i])
-
-      global.socketIo.to(`chat-${chatId}`).emit('newMessage', JSON.stringify(message))
-
-      for (const socket of inactiveSockets) {
-        const unreadMessagesCount = await prisma.messages.count({
-          where: {
-            chatId,
-            MessageStatus: {
-              some: {
-                userId: socket.userId,
-                seen: false
-              }
-            }
-          }
-        })
-
-        const chatSummary = {
-          id: chat.id,
-          type: chat.type,
-          name: chat.name ?? chat.Participants.find((i) => i.userId !== userId)?.User.fullName,
-          lastMessage: content,
-          unreadMessagesCount
-        }
-
-        socket.emit('updateChat', chatSummary)
-      }
-    }
+    void handleSocketIOCommunication(chatId, message, chat, userId)
 
     const response = createSuccessResponse(messageWithImageUrls)
     return res.status(response.status.code).json(response)
