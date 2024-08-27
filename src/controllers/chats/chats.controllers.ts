@@ -116,7 +116,11 @@ const handleSocketIOCommunication = async (
     const inactiveRoomUserIds = participants
       .filter((i) => !activeRoomUserIds.includes(i.userId))
       .map((i) => i.userId)
-    const inactiveSockets = inactiveRoomUserIds.map((i) => global.connectedSockets[i])
+    const inactiveSockets = inactiveRoomUserIds
+      .map((i) => global.connectedSockets[i])
+      .filter((i) => i !== undefined)
+
+    console.log({ activeRoomSockets, activeRoomUserIds, inactiveRoomUserIds, inactiveSockets })
 
     await prisma.messageStatus.createMany({
       data: inactiveRoomUserIds.map((i) => ({ userId: i, messageId: message.id }))

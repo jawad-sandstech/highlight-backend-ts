@@ -23,10 +23,10 @@ const authenticateUser = async (socket: Socket): Promise<string | jwt.JwtPayload
 
 const handleConnection = async (socket: Socket): Promise<void> => {
   try {
-    console.log('a user connected', socket.id)
-
     const decodedToken = await authenticateUser(socket)
     const { userId } = decodedToken as TDecodedUser
+
+    console.log('a user connected', socket.id)
 
     socket.userId = userId
     global.connectedSockets[userId] = socket
