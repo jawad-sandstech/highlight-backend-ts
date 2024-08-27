@@ -479,9 +479,12 @@ const createMessage = async (
       const inactiveRoomUserIds = chat.Participants.filter(
         (i) => !activeRoomUserIds.includes(i.userId)
       ).map((i) => i.userId)
-      const inactiveSockets = inactiveRoomUserIds.map((i) => global.connectedSockets[i])
 
-      console.log({ activeRoomSockets, activeRoomUserIds, inactiveRoomUserIds, inactiveSockets })
+      await prisma.messageStatus.createMany({
+        data: inactiveRoomUserIds.map((i) => ({ userId: i, messageId: message.id }))
+      })
+
+      const inactiveSockets = inactiveRoomUserIds.map((i) => global.connectedSockets[i])
 
       global.socketIo.to(`chat-${chatId}`).emit('newMessage', JSON.stringify(message))
 
