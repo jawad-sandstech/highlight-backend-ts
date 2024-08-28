@@ -17,6 +17,7 @@ import type { Chats, Messages, Participants, Users } from '@prisma/client'
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import config from '../../config/config'
+import sendNotification from '../../utils/sendNotification'
 
 type TGetAllChatsQuery = {
   type: 'PRIVATE' | 'GROUP'
@@ -109,6 +110,7 @@ const handleSocketIOCommunication = async (
 ): Promise<void> => {
   if (global.socketIo !== null) {
     const participants = chat.Participants
+    const otherParticipantName = chat.Participants.find((i) => i.userId !== userId)?.User.fullName
 
     const activeRoomSockets = await global.socketIo?.in(`chat-${chatId}`).fetchSockets()
     const activeRoomUserIds = activeRoomSockets?.map((socket) => (socket as any).userId)
@@ -126,7 +128,11 @@ const handleSocketIOCommunication = async (
       data: inactiveRoomUserIds.map((i) => ({ userId: i, messageId: message.id }))
     })
 
-    global.socketIo.to(`chat-${chatId}`).emit('newMessage', JSON.stringify(message))
+    if (global.connectedSockets[userId] !== undefined) {
+      global.connectedSockets[userId]
+        .to(`chat-${chatId}`)
+        .emit('newMessage', JSON.stringify(message))
+    }
 
     for (const socket of inactiveSockets) {
       const unreadMessagesCount = await prisma.messages.count({
@@ -144,12 +150,20 @@ const handleSocketIOCommunication = async (
       const chatSummary = {
         id: chat.id,
         type: chat.type,
-        name: chat.name ?? chat.Participants.find((i) => i.userId !== userId)?.User.fullName,
-        lastMessage: message.content,
+        name: chat.name ?? otherParticipantName,
+        lastMessage: message,
         unreadMessagesCount
       }
 
       socket.emit('updateChat', chatSummary)
+    }
+
+    for (const userId of inactiveRoomUserIds) {
+      void sendNotification(
+        userId,
+        `New Message From ${chat.name ?? otherParticipantName}`,
+        message.content ?? '...'
+      )
     }
   }
 }

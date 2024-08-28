@@ -33,7 +33,8 @@ const updateProfile = Joi.object({
     gender: Joi.string().valid('MALE', 'FEMALE', 'OTHER').optional(),
     address: Joi.string().optional(),
     phoneNumber: Joi.string().optional(),
-    zoomId: Joi.string().optional()
+    zoomId: Joi.string().optional(),
+    fcmToken: Joi.string().optional()
   })
 })
 
