@@ -193,7 +193,6 @@ model Jobs {
   UserHiddenJobs            UserHiddenJobs[]
   JobApplications           JobApplications[]
   ReportedJobs              ReportedJobs[]
-  UserSchedules             UserSchedules[]
   UserRating                UserRating[]
 }
 
@@ -268,11 +267,12 @@ model ReportedJobs {
 }
 
 model Chats {
-  id           Int            @id @default(autoincrement())
-  name         String?
-  type         CHAT_TYPE
-  Participants Participants[]
-  Messages     Messages[]
+  id            Int             @id @default(autoincrement())
+  name          String?
+  type          CHAT_TYPE
+  Participants  Participants[]
+  Messages      Messages[]
+  UserSchedules UserSchedules[]
 }
 
 model Participants {
@@ -309,15 +309,16 @@ model MessageStatus {
 
 model UserSchedules {
   id              Int      @id @default(autoincrement())
+  chatId          Int
   organizerId     Int
   attendeeId      Int
-  jobId           Int
+  agenda          String
   meetingDateTime DateTime
   zoomMeetingLink String
   createdAt       DateTime @default(now())
   Organizer       Users    @relation("OrganizerSchedules", fields: [organizerId], references: [id], onDelete: Cascade)
   Attendee        Users    @relation("AttendeeSchedules", fields: [attendeeId], references: [id], onDelete: Cascade)
-  Job             Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  Chat            Chats    @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }
 
 model UserPreference {

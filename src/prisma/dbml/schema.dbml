@@ -180,7 +180,6 @@ Table Jobs {
   UserHiddenJobs UserHiddenJobs [not null]
   JobApplications JobApplications [not null]
   ReportedJobs ReportedJobs [not null]
-  UserSchedules UserSchedules [not null]
   UserRating UserRating [not null]
 }
 
@@ -260,6 +259,7 @@ Table Chats {
   type CHAT_TYPE [not null]
   Participants Participants [not null]
   Messages Messages [not null]
+  UserSchedules UserSchedules [not null]
 }
 
 Table Participants {
@@ -296,15 +296,16 @@ Table MessageStatus {
 
 Table UserSchedules {
   id Int [pk, increment]
+  chatId Int [not null]
   organizerId Int [not null]
   attendeeId Int [not null]
-  jobId Int [not null]
+  agenda String [not null]
   meetingDateTime DateTime [not null]
   zoomMeetingLink String [not null]
   createdAt DateTime [default: `now()`, not null]
   Organizer Users [not null]
   Attendee Users [not null]
-  Job Jobs [not null]
+  Chat Chats [not null]
 }
 
 Table UserPreference {
@@ -471,7 +472,7 @@ Ref: UserSchedules.organizerId > Users.id [delete: Cascade]
 
 Ref: UserSchedules.attendeeId > Users.id [delete: Cascade]
 
-Ref: UserSchedules.jobId > Jobs.id [delete: Cascade]
+Ref: UserSchedules.chatId > Chats.id [delete: Cascade]
 
 Ref: UserPreference.userId - Users.id [delete: Cascade]
 

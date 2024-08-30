@@ -1,17 +1,24 @@
-import { serverErrorResponse, okResponse, unauthorizedResponse } from 'generic-response'
+import {
+  serverErrorResponse,
+  okResponse,
+  unauthorizedResponse,
+  notFoundResponse,
+  badRequestResponse,
+  createSuccessResponse
+} from 'generic-response'
 
 import prisma from '../../config/database.config'
 
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
-// import type { Participants } from '@prisma/client'
 
 type TGetAllSchedulesQuery = {
   jobId?: string
 }
 
 type TCreateScheduleBody = {
-  jobId: number
+  chatId: number
+  agenda: string
   meetingDateTime: string
   zoomMeetingLink: string
 }
@@ -19,10 +26,6 @@ type TCreateScheduleBody = {
 type TGetAllSchedulesWhereClause = {
   jobId?: number
 }
-
-// const isUserParticipant = (participants: Participants[], userId: number): boolean => {
-//   return participants.some((participant: any) => participant.userId === userId)
-// }
 
 const getAllSchedules = async (
   req: AuthRequest<unknown, unknown, unknown, TGetAllSchedulesQuery>,
@@ -49,9 +52,6 @@ const getAllSchedules = async (
       where: {
         OR: [{ organizerId: userId }, { attendeeId: userId }],
         ...getAllSchedulesWhereClause
-      },
-      include: {
-        Job: true
       }
     })
 
@@ -74,37 +74,47 @@ const createSchedule = async (
   res: Response
 ): Promise<Response> => {
   const user = req.user
-  // const data = req.body
+  const data = req.body
 
   if (user === undefined) {
     const response = unauthorizedResponse()
     return res.status(response.status.code).json(response)
   }
 
-  // const { userId } = user
+  const { userId } = user
 
   try {
-    // const chat = await prisma.userSchedules.findUnique()
-    // where: { id: data. },
-    // include: {
-    //   Participants: {
-    //     include: {
-    //       User: true
-    //     }
-    //   }
-    // }
+    const chat = await prisma.chats.findUnique({
+      where: { id: data.chatId },
+      include: { Participants: true }
+    })
 
-    // if (chat === null) {
-    // const response = notFoundResponse()
-    // return res.status(response.status.code).json(response)
-    // }
+    if (chat === null) {
+      const response = notFoundResponse('chat not found')
+      return res.status(response.status.code).json(response)
+    }
 
-    // if (!isUserParticipant(chat?.Participants, userId)) {
-    //   const response = unauthorizedResponse()
-    //   return res.status(response.status.code).json(response)
-    // }
+    if (chat?.type !== 'PRIVATE') {
+      const response = badRequestResponse('works on only private chats')
+      return res.status(response.status.code).json(response)
+    }
 
-    const response = okResponse()
+    const otherParticipant = chat?.Participants.find((i) => i.userId !== userId)
+
+    if (otherParticipant === undefined) {
+      const response = badRequestResponse()
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.userSchedules.create({
+      data: {
+        organizerId: userId,
+        attendeeId: otherParticipant.userId,
+        ...data
+      }
+    })
+
+    const response = createSuccessResponse()
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {

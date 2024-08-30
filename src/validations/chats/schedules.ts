@@ -12,7 +12,8 @@ const createSchedule = Joi.object({
   query: Joi.object({}),
   params: Joi.object({}),
   body: Joi.object({
-    jobId: Joi.number().required(),
+    chatId: Joi.number().required(),
+    agenda: Joi.string().required(),
     meetingDateTime: Joi.string().required(),
     zoomMeetingLink: Joi.string().required()
   })
