@@ -95,13 +95,6 @@ const isGroupAdmin = (userId: number, participants: Participants[]): boolean => 
   return participants.some((participant) => participant.userId === userId && participant.isAdmin)
 }
 
-// const getRoomUserIds = async (chatId: number): Promise<number[] | undefined> => {
-//   const roomUsers = await global.socketIo?.in(`chat-${chatId}`).fetchSockets()
-//   const roomUserIds = roomUsers?.map((socket) => (socket as any).id)
-
-//   return roomUserIds
-// }
-
 const handleSocketIOCommunication = async (
   chatId: number,
   message: Messages,

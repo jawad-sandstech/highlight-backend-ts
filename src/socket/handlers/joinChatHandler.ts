@@ -54,6 +54,11 @@ const joinChatHandler = async (socket: Socket, chatId: number): Promise<void> =>
 
     await socket.join(`chat-${chatId}`)
 
+    await prisma.messageStatus.updateMany({
+      where: { userId: socket.userId },
+      data: { seen: true }
+    })
+
     console.log(`User ${socket.userId} joined chat ${chatId}`)
   } catch (error) {
     console.error('Error handling joinChat event:', error)

@@ -14,6 +14,7 @@ import type { AuthRequest } from '../../interfaces/auth-request'
 
 type TGetAllSchedulesQuery = {
   jobId?: string
+  dateRange?: string
 }
 
 type TCreateScheduleBody = {
@@ -25,6 +26,10 @@ type TCreateScheduleBody = {
 
 type TGetAllSchedulesWhereClause = {
   jobId?: number
+  meetingDateTime?: {
+    gte: Date
+    lt: Date
+  }
 }
 
 const getAllSchedules = async (
@@ -33,6 +38,7 @@ const getAllSchedules = async (
 ): Promise<Response> => {
   const jobId = req.query.jobId
   const user = req.user
+  const dateRange = req.query.dateRange
 
   if (user === undefined) {
     const response = unauthorizedResponse()
@@ -48,6 +54,19 @@ const getAllSchedules = async (
       getAllSchedulesWhereClause.jobId = Number(jobId)
     }
 
+    if (dateRange !== undefined) {
+      const [startDateStr, endDateStr] = dateRange.split('_')
+      const startDate = new Date(startDateStr)
+      const endDate = new Date(endDateStr)
+
+      endDate.setDate(endDate.getDate() + 1)
+
+      getAllSchedulesWhereClause.meetingDateTime = {
+        gte: startDate,
+        lt: endDate
+      }
+    }
+
     const schedules = await prisma.userSchedules.findMany({
       where: {
         OR: [{ organizerId: userId }, { attendeeId: userId }],
@@ -55,7 +74,17 @@ const getAllSchedules = async (
       }
     })
 
-    const response = okResponse(schedules)
+    const now = new Date()
+
+    const pastSchedules = schedules.filter((schedule) => new Date(schedule.meetingDateTime) < now)
+    const upcomingSchedules = schedules.filter(
+      (schedule) => new Date(schedule.meetingDateTime) >= now
+    )
+
+    const response = okResponse({
+      pastSchedules,
+      upcomingSchedules
+    })
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
