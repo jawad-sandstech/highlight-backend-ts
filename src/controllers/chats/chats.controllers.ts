@@ -321,6 +321,58 @@ const getAllMessages = async (
   }
 }
 
+const getAllParticipants = async (
+  req: AuthRequest<TGetSingleChatParams>,
+  res: Response
+): Promise<Response> => {
+  const user = req.user
+  const chatId = Number(req.params.chatId)
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    const chat = await prisma.chats.findUnique({
+      where: { id: chatId },
+      include: {
+        Participants: {
+          include: {
+            User: true
+          }
+        }
+      }
+    })
+
+    if (chat === null) {
+      const response = notFoundResponse()
+      return res.status(response.status.code).json(response)
+    }
+
+    const participant = chat.Participants.find((i) => i.userId === userId)
+
+    if (participant === undefined) {
+      const response = unauthorizedResponse()
+      return res.status(response.status.code).json(response)
+    }
+
+    const response = okResponse(chat.Participants)
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
 const uploadAttachment = async (file: Express.Multer.File): Promise<string> => {
   try {
     const folderName = 'chat-attachments'
@@ -757,6 +809,7 @@ const removeMembersFromGroup = async (
 export default {
   getAllChats,
   getAllMessages,
+  getAllParticipants,
   createPrivateChat,
   createGroupChat,
   createMessage,

@@ -26,6 +26,12 @@ router.get(
   validateRequest(chatsValidations.getAllMessages),
   chatsControllers.getAllMessages
 )
+router.get(
+  '/:chatId/participants',
+  authRequired(),
+  validateRequest(chatsValidations.getAllParticipants),
+  chatsControllers.getAllParticipants
+)
 router.post(
   '/private',
   authRequired(),

@@ -16,6 +16,14 @@ const getAllMessages = Joi.object({
   body: Joi.object({})
 })
 
+const getAllParticipants = Joi.object({
+  query: Joi.object({}),
+  params: Joi.object({
+    chatId: Joi.number().required()
+  }),
+  body: Joi.object({})
+})
+
 const createPrivateChat = Joi.object({
   query: Joi.object({}),
   params: Joi.object({}),
@@ -39,7 +47,7 @@ const createMessage = Joi.object({
     chatId: Joi.number().required()
   }),
   body: Joi.object({
-    content: Joi.string().required()
+    content: Joi.string().optional()
   })
 })
 
@@ -66,6 +74,7 @@ const removeMembersFromGroup = Joi.object({
 export default {
   getAllChats,
   getAllMessages,
+  getAllParticipants,
   createPrivateChat,
   createGroupChat,
   createMessage,
