@@ -42,5 +42,19 @@ router.post(
   validateRequest(feedbacksValidations.publishJob),
   feedbacksControllers.publishJob
 )
+router.patch(
+  '/:jobId',
+  authRequired(),
+  rolesRequired(['BUSINESS']),
+  upload.single('banner'),
+  feedbacksControllers.updateJob
+)
+router.delete(
+  '/:jobId',
+  authRequired(),
+  rolesRequired(['BUSINESS']),
+  upload.single('banner'),
+  feedbacksControllers.deleteJob
+)
 
 export default router

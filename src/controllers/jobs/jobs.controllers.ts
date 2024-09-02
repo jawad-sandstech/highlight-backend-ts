@@ -8,7 +8,8 @@ import {
   okResponse,
   unauthorizedResponse,
   badRequestResponse,
-  updateSuccessResponse
+  updateSuccessResponse,
+  deleteSuccessResponse
 } from 'generic-response'
 
 import prisma from '../../config/database.config'
@@ -62,6 +63,22 @@ type TPublishJobBody = {
   jobId: number
 }
 
+type TUpdateJobParams = {
+  jobId: string
+}
+
+type TUpdateJobBody = {
+  title?: string
+  description?: string
+  requiredQualification?: string[]
+  sportId?: number
+  type?: JOB_TYPE
+}
+
+type TDeleteJobParams = {
+  jobId: string
+}
+
 const insufficientFundsMessage = `Insufficient funds. 💡 Non-Premium businesses pay +${config.PLATFORM_FEE_PERCENTAGE}% salary.`
 
 const parseCreateJobFormData = (reqBody: any): TCreateJobBody => {
@@ -69,6 +86,15 @@ const parseCreateJobFormData = (reqBody: any): TCreateJobBody => {
 
   data.requiredQualification = JSON.parse(String(reqBody.requiredQualification))
   data.salary = Number(reqBody.salary)
+  data.sportId = Number(reqBody.sportId)
+
+  return data
+}
+
+const parseUpdateJobFormData = (reqBody: any): TUpdateJobBody => {
+  const data: any = reqBody
+
+  data.requiredQualification = JSON.parse(String(reqBody.requiredQualification))
   data.sportId = Number(reqBody.sportId)
 
   return data
@@ -447,10 +473,155 @@ const publishJob = async (
   }
 }
 
+const updateJob = async (
+  req: AuthRequest<TUpdateJobParams, unknown, TUpdateJobBody>,
+  res: Response
+): Promise<Response> => {
+  const authenticatedUser = req.user
+  const jobId = Number(req.params.jobId)
+  const file = req.file
+  req.body = parseUpdateJobFormData(req.body)
+  const { requiredQualification, ...data } = req.body
+
+  const [success, error] = validateRequestHandler(jobValidation.updateJob, req)
+
+  if (!success) {
+    const response = badRequestResponse(error)
+    return res.status(response.status.code).json(response)
+  }
+
+  if (authenticatedUser === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = authenticatedUser
+
+  try {
+    const existingSportId = await prisma.sports.findUnique({ where: { id: data.sportId } })
+
+    if (existingSportId === null) {
+      const response = notFoundResponse(`Sport with id: ${data.sportId} not found.`)
+      return res.status(response.status.code).json(response)
+    }
+
+    const job = await prisma.jobs.findUnique({ where: { id: jobId } })
+
+    if (job === null) {
+      const response = notFoundResponse('job not found.')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (job.userId !== userId) {
+      const response = unauthorizedResponse('not yours.')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (job.status !== 'OPEN') {
+      const response = badRequestResponse('job already filled.')
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.jobApplications.deleteMany({ where: { jobId } })
+
+    if (file !== undefined) {
+      const bannerImage = await uploadJobBanner(file)
+      await prisma.jobs.update({ where: { id: jobId }, data: { bannerImage } })
+    }
+
+    if (file !== undefined) {
+      const bannerImage = await uploadJobBanner(file)
+      await prisma.jobs.update({ where: { id: jobId }, data: { bannerImage } })
+    }
+
+    if (requiredQualification !== undefined) {
+      await prisma.jobRequiredQualifications.deleteMany({ where: { jobId } })
+      await prisma.jobRequiredQualifications.createMany({
+        data: requiredQualification.map((i) => ({ jobId, description: i }))
+      })
+    }
+
+    await prisma.jobs.update({
+      where: { id: jobId },
+      data: {
+        ...data
+      }
+    })
+
+    const response = updateSuccessResponse()
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
+const deleteJob = async (req: AuthRequest<TDeleteJobParams>, res: Response): Promise<Response> => {
+  const jobId = Number(req.params.jobId)
+  const user = req.user
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    const job = await prisma.jobs.findUnique({ where: { id: jobId } })
+
+    if (job === null) {
+      const response = notFoundResponse('job not found.')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (job.userId !== userId) {
+      const response = unauthorizedResponse('not yours.')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (job.status !== 'OPEN') {
+      const response = badRequestResponse('job already filled.')
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.transactions.create({
+      data: {
+        userId,
+        amount: job.salary,
+        transactionType: 'DEPOSIT',
+        source: { event: 'JOB_DELETE', recourseId: job.id }
+      }
+    })
+
+    await prisma.jobs.delete({ where: { id: jobId } })
+
+    const response = deleteSuccessResponse()
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
 export default {
   getAllJobs,
   getSingleJob,
   uploadJobBanner,
   createJob,
-  publishJob
+  publishJob,
+  updateJob,
+  deleteJob
 }

@@ -68,10 +68,36 @@ const publishJob = Joi.object({
   })
 })
 
+const updateJob = Joi.object({
+  query: Joi.object({}),
+  params: Joi.object({
+    jobId: Joi.number().required()
+  }),
+  body: Joi.object({
+    title: Joi.string().optional(),
+    description: Joi.string().optional(),
+    requiredQualification: Joi.array().items(Joi.string()).min(1).optional(),
+    sportId: Joi.number().optional(),
+    type: Joi.string()
+      .valid('SOCIAL_MEDIA', 'MEET_AND_GREET', 'AUTOGRAPHS', 'PHOTO_SHOOTS', 'OTHER')
+      .optional()
+  })
+})
+
+const deleteJob = Joi.object({
+  query: Joi.object({}),
+  params: Joi.object({
+    jobId: Joi.number().required()
+  }),
+  body: Joi.object({})
+})
+
 export default {
   getAllJobs,
   getSingleJob,
   uploadJobBanner,
   createJob,
-  publishJob
+  publishJob,
+  updateJob,
+  deleteJob
 }
