@@ -9,13 +9,14 @@ import multiGroupBy from 'multi-groupby'
 import config from '../../config/config'
 import prisma from '../../config/database.config'
 
-import type { JobRequiredQualifications, Jobs, Users } from '@prisma/client'
+import type { JobRequiredQualifications, Jobs, Sports, Users } from '@prisma/client'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
 
 type JobWithUser = Jobs & {
   User: Users
+  Sport: Sports | null
   JobRequiredQualifications: JobRequiredQualifications[]
 }
 
@@ -53,7 +54,11 @@ const getAllJobsOfBusiness = async (req: AuthRequest, res: Response): Promise<Re
 
     let jobs = await prisma.jobs.findMany({
       where: { userId },
-      include: { User: true, JobRequiredQualifications: true }
+      include: {
+        User: true,
+        Sport: true,
+        JobRequiredQualifications: true
+      }
     })
 
     jobs = processJobs(jobs)
