@@ -32,6 +32,12 @@ router.get(
   validateRequest(chatsValidations.getAllParticipants),
   chatsControllers.getAllParticipants
 )
+router.get(
+  '/:chatId/non-participants',
+  authRequired(),
+  validateRequest(chatsValidations.getAllNonParticipants),
+  chatsControllers.getAllNonParticipants
+)
 router.post(
   '/private',
   authRequired(),
@@ -64,6 +70,18 @@ router.post(
   authRequired(),
   validateRequest(chatsValidations.removeMembersFromGroup),
   chatsControllers.removeMembersFromGroup
+)
+router.patch(
+  '/:chatId',
+  authRequired(),
+  validateRequest(chatsValidations.editGroup),
+  chatsControllers.editGroup
+)
+router.delete(
+  '/:chatId',
+  authRequired(),
+  validateRequest(chatsValidations.deleteGroup),
+  chatsControllers.deleteGroup
 )
 
 export default router

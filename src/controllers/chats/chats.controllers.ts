@@ -6,7 +6,8 @@ import {
   notFoundResponse,
   createSuccessResponse,
   badRequestResponse,
-  updateSuccessResponse
+  updateSuccessResponse,
+  deleteSuccessResponse
 } from 'generic-response'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 
@@ -70,6 +71,18 @@ type TParticipantWithDetails = Participants & {
 
 type TChatWithParticipantDetails = Chats & {
   Participants: TParticipantWithDetails[]
+}
+
+type TEditGroupParams = {
+  chatId: string
+}
+
+type TEditGroupBody = {
+  name: string
+}
+
+type TDeleteGroupParams = {
+  chatId: string
 }
 
 const userHasAccessToChat = (userId: number, chat: TChatWithParticipants): boolean => {
@@ -391,6 +404,60 @@ const getAllParticipants = async (
   }
 }
 
+const getAllNonParticipants = async (
+  req: AuthRequest<TGetSingleChatParams>,
+  res: Response
+): Promise<Response> => {
+  const user = req.user
+  const chatId = Number(req.params.chatId)
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  try {
+    const chat = await prisma.chats.findUnique({
+      where: { id: chatId }
+    })
+
+    if (chat === null) {
+      const response = notFoundResponse()
+      return res.status(response.status.code).json(response)
+    }
+
+    if (chat.type !== 'GROUP') {
+      const response = badRequestResponse('not a group')
+      return res.status(response.status.code).json(response)
+    }
+
+    const participants = await prisma.participants.findMany({
+      where: { chatId, exitedAt: null },
+      select: { id: true }
+    })
+
+    const users = await prisma.users.findMany({
+      where: {
+        id: {
+          notIn: participants.map((i) => i.id)
+        }
+      }
+    })
+
+    const response = okResponse(users)
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
 const uploadAttachment = async (file: Express.Multer.File): Promise<string> => {
   try {
     const folderName = 'chat-attachments'
@@ -617,7 +684,9 @@ const createMessage = async (
       void handleSocketIOCommunication(chatId, message, chat, userId)
     }
 
-    const response = createSuccessResponse()
+    const attachmentUrls = attachmentPaths.map((i) => `${config.S3_ACCESS_URL}/${i}`)
+
+    const response = createSuccessResponse(attachmentUrls)
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
@@ -828,13 +897,124 @@ const removeMembersFromGroup = async (
   }
 }
 
+const editGroup = async (
+  req: AuthRequest<TEditGroupParams, unknown, TEditGroupBody>,
+  res: Response
+): Promise<Response> => {
+  const chatId = Number(req.params.chatId)
+  const { name } = req.body
+  const user = req.user
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    const chat = await prisma.chats.findUnique({
+      where: { id: chatId },
+      include: { Participants: true }
+    })
+
+    if (chat === null) {
+      const response = notFoundResponse('chat not found')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (chat.type !== 'GROUP') {
+      const response = badRequestResponse('not a group')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (!isGroupAdmin(userId, chat.Participants)) {
+      const response = unauthorizedResponse('not a group admin')
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.chats.update({
+      where: { id: chatId },
+      data: { name }
+    })
+
+    const response = updateSuccessResponse()
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
+const deleteGroup = async (
+  req: AuthRequest<TDeleteGroupParams>,
+  res: Response
+): Promise<Response> => {
+  const chatId = Number(req.params.chatId)
+  const user = req.user
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    const chat = await prisma.chats.findUnique({
+      where: { id: chatId },
+      include: { Participants: true }
+    })
+
+    if (chat === null) {
+      const response = notFoundResponse('chat not found')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (chat.type !== 'GROUP') {
+      const response = badRequestResponse('not a group')
+      return res.status(response.status.code).json(response)
+    }
+
+    if (!isGroupAdmin(userId, chat.Participants)) {
+      const response = unauthorizedResponse('not a group admin')
+      return res.status(response.status.code).json(response)
+    }
+
+    await prisma.chats.delete({
+      where: { id: chatId }
+    })
+
+    const response = deleteSuccessResponse()
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
 export default {
   getAllChats,
   getAllMessages,
   getAllParticipants,
+  getAllNonParticipants,
   createPrivateChat,
   createGroupChat,
   createMessage,
   addMembersInGroup,
-  removeMembersFromGroup
+  removeMembersFromGroup,
+  editGroup,
+  deleteGroup
 }
