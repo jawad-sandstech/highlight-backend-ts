@@ -136,8 +136,9 @@ const handleSocketIOCommunication = async (
     const participants = chat.Participants
     const otherParticipantName = chat.Participants.find((i) => i.userId !== userId)?.User.fullName
 
-    const activeRoomSockets = await global.socketIo?.in(`chat-${chatId}`).fetchSockets()
-    const activeRoomUserIds = activeRoomSockets?.map((socket) => (socket as any).userId)
+    const remoteActiveRoomSockets = await global.socketIo?.in(`chat-${chatId}`).fetchSockets()
+    const activeRoomUserIds = remoteActiveRoomSockets?.map((socket) => (socket as any).userId)
+    const activeRoomSockets = activeRoomUserIds.map((i) => global.connectedSockets[i])
 
     const inactiveRoomUserIds = participants
       .filter((i) => !activeRoomUserIds.includes(i.userId))
@@ -146,7 +147,12 @@ const handleSocketIOCommunication = async (
       .map((i) => global.connectedSockets[i])
       .filter((i) => i !== undefined)
 
-    console.log({ activeRoomSockets, activeRoomUserIds, inactiveRoomUserIds, inactiveSockets })
+    console.log({
+      remoteActiveRoomSockets,
+      activeRoomUserIds,
+      inactiveRoomUserIds,
+      inactiveSockets
+    })
 
     await prisma.messageStatus.createMany({
       data: inactiveRoomUserIds.map((i) => ({ userId: i, messageId: message.id }))
@@ -158,7 +164,7 @@ const handleSocketIOCommunication = async (
         .emit('newMessage', JSON.stringify(message))
     }
 
-    for (const socket of inactiveSockets) {
+    for (const socket of [...activeRoomSockets, ...inactiveSockets]) {
       const unreadMessagesCount = await prisma.messages.count({
         where: {
           chatId,
