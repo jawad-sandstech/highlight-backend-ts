@@ -85,7 +85,7 @@ const userHasAccessToChat = (userId: number, chat: TChatWithParticipants): boole
   return false
 }
 
-const augmentMessageWithImageUrls = (message: Messages): Messages => {
+const augmentMessageWithImageUrl = (message: Messages): Messages => {
   message.attachment &&= config.S3_ACCESS_URL + message.attachment
 
   return message
@@ -93,6 +93,24 @@ const augmentMessageWithImageUrls = (message: Messages): Messages => {
 
 const isGroupAdmin = (userId: number, participants: Participants[]): boolean => {
   return participants.some((participant) => participant.userId === userId && participant.isAdmin)
+}
+
+const createMessageInChat = async (
+  chatId: number,
+  senderId: number,
+  content: string,
+  attachmentPath?: string
+): Promise<Messages> => {
+  const message = await prisma.messages.create({
+    data: {
+      chatId,
+      senderId,
+      content,
+      attachment: attachmentPath
+    }
+  })
+
+  return message
 }
 
 const handleSocketIOCommunication = async (
@@ -543,7 +561,7 @@ const createMessage = async (
   res: Response
 ): Promise<Response> => {
   const user = req.user
-  const attachment = req.file
+  const attachments = req.files as Express.Multer.File[] | undefined
   const chatId = Number(req.params.chatId)
   const { content } = req.body
 
@@ -567,7 +585,7 @@ const createMessage = async (
     })
 
     if (chat === null) {
-      const response = notFoundResponse()
+      const response = notFoundResponse('chat not found')
       return res.status(response.status.code).json(response)
     }
 
@@ -576,26 +594,30 @@ const createMessage = async (
       return res.status(response.status.code).json(response)
     }
 
-    let attachmentPath: string | undefined
+    let attachmentPaths: string[] = []
 
-    if (attachment !== undefined) {
-      attachmentPath = await uploadAttachment(attachment)
+    if (attachments !== undefined) {
+      attachmentPaths = await Promise.all(
+        attachments.map(async (attachment) => await uploadAttachment(attachment))
+      )
     }
 
-    const message = await prisma.messages.create({
-      data: {
-        chatId,
-        senderId: userId,
-        content,
-        attachment: attachmentPath
-      }
-    })
+    if (attachmentPaths.length > 0) {
+      const messageCreationPromises = attachmentPaths.map(async (attachmentPath) => {
+        const message = await createMessageInChat(chatId, userId, 'attachment', attachmentPath)
+        const messageWithImageUrl = augmentMessageWithImageUrl(message)
 
-    const messageWithImageUrls = augmentMessageWithImageUrls(message)
+        void handleSocketIOCommunication(chatId, messageWithImageUrl, chat, userId)
+      })
 
-    void handleSocketIOCommunication(chatId, message, chat, userId)
+      await Promise.all(messageCreationPromises)
+    } else {
+      const message = await createMessageInChat(chatId, userId, content)
 
-    const response = createSuccessResponse(messageWithImageUrls)
+      void handleSocketIOCommunication(chatId, message, chat, userId)
+    }
+
+    const response = createSuccessResponse()
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {

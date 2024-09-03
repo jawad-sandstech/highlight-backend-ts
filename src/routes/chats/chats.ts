@@ -49,7 +49,7 @@ router.post(
 router.post(
   '/:chatId',
   authRequired(),
-  upload.single('attachment'),
+  upload.array('attachments'),
   validateRequest(chatsValidations.createMessage),
   chatsControllers.createMessage
 )
