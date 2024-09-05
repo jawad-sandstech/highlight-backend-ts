@@ -20,5 +20,12 @@ router.post(
   validateRequest(galleryValidations.uploadGallery),
   galleryControllers.uploadGallery
 )
+router.patch(
+  '/',
+  authRequired(),
+  upload.array('images'),
+  validateRequest(galleryValidations.updateGallery),
+  galleryControllers.updateGallery
+)
 
 export default router

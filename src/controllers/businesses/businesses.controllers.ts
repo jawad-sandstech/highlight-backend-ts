@@ -9,6 +9,7 @@ import prisma from '../../config/database.config'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
+import config from '../../config/config'
 
 type TGetAllBusinessParams = {
   isPremium?: string
@@ -51,6 +52,10 @@ const getAllBusinesses = async (
     const businesses = await prisma.users.findMany({
       where: whereClause,
       include: { BusinessInfo: true, FavoriteBusinesses: { where: { userId } } }
+    })
+
+    businesses.forEach((i) => {
+      i.profilePicture &&= `${config.S3_ACCESS_URL}/${i.profilePicture}`
     })
 
     const response = okResponse(businesses)

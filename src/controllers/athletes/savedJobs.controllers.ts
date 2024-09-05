@@ -10,6 +10,7 @@ import prisma from '../../config/database.config'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
+import config from '../../config/config'
 
 type TToggleSavedJobsBody = {
   jobId: number
@@ -29,6 +30,10 @@ const getMySavedJobs = async (req: AuthRequest, res: Response): Promise<Response
     const savedJobs = await prisma.userSavedJobs.findMany({
       where: { userId },
       include: { Job: true }
+    })
+
+    savedJobs.forEach((i) => {
+      i.Job.bannerImage = `${config.S3_ACCESS_URL}/${i.Job.bannerImage}`
     })
 
     const response = okResponse(savedJobs)

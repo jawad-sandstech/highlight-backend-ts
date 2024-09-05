@@ -178,6 +178,11 @@ const getAllJobs = async (
       }
     })
 
+    jobs.forEach((i) => {
+      i.bannerImage = `${config.S3_ACCESS_URL}/${i.bannerImage}`
+      i.User.profilePicture &&= `${config.S3_ACCESS_URL}/${i.User.profilePicture}`
+    })
+
     const response = okResponse(jobs)
     return res.status(response.status.code).json(response)
   } catch (error) {
@@ -224,6 +229,8 @@ const getSingleJob = async (
       const response = notFoundResponse('job not found')
       return res.status(response.status.code).json(response)
     }
+
+    job.bannerImage &&= `${config.S3_ACCESS_URL}/${job.bannerImage}`
 
     const response = okResponse({ job })
     return res.status(response.status.code).json(response)

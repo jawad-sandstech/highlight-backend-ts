@@ -266,6 +266,8 @@ CREATE TABLE `Participants` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `chatId` INTEGER NOT NULL,
     `userId` INTEGER NOT NULL,
+    `exitedAt` DATETIME(3) NULL,
+    `isAdmin` BOOLEAN NOT NULL DEFAULT false,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -277,7 +279,18 @@ CREATE TABLE `Messages` (
     `senderId` INTEGER NOT NULL,
     `attachment` VARCHAR(191) NULL,
     `content` TEXT NULL,
+    `messageType` ENUM('TEXT', 'SYSTEM') NOT NULL DEFAULT 'TEXT',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `MessageStatus` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `messageId` INTEGER NOT NULL,
+    `userId` INTEGER NOT NULL,
+    `seen` BOOLEAN NOT NULL DEFAULT false,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -285,9 +298,10 @@ CREATE TABLE `Messages` (
 -- CreateTable
 CREATE TABLE `UserSchedules` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `chatId` INTEGER NOT NULL,
     `organizerId` INTEGER NOT NULL,
     `attendeeId` INTEGER NOT NULL,
-    `jobId` INTEGER NOT NULL,
+    `agenda` VARCHAR(191) NOT NULL,
     `meetingDateTime` DATETIME(3) NOT NULL,
     `zoomMeetingLink` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -309,7 +323,8 @@ CREATE TABLE `UserPreference` (
 CREATE TABLE `Feedback` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
-    `text` TEXT NOT NULL,
+    `subject` TEXT NOT NULL,
+    `description` TEXT NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
@@ -410,13 +425,19 @@ ALTER TABLE `Messages` ADD CONSTRAINT `Messages_chatId_fkey` FOREIGN KEY (`chatI
 ALTER TABLE `Messages` ADD CONSTRAINT `Messages_senderId_fkey` FOREIGN KEY (`senderId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `MessageStatus` ADD CONSTRAINT `MessageStatus_messageId_fkey` FOREIGN KEY (`messageId`) REFERENCES `Messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `MessageStatus` ADD CONSTRAINT `MessageStatus_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `UserSchedules` ADD CONSTRAINT `UserSchedules_organizerId_fkey` FOREIGN KEY (`organizerId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `UserSchedules` ADD CONSTRAINT `UserSchedules_attendeeId_fkey` FOREIGN KEY (`attendeeId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `UserSchedules` ADD CONSTRAINT `UserSchedules_jobId_fkey` FOREIGN KEY (`jobId`) REFERENCES `Jobs`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `UserSchedules` ADD CONSTRAINT `UserSchedules_chatId_fkey` FOREIGN KEY (`chatId`) REFERENCES `Chats`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `UserPreference` ADD CONSTRAINT `UserPreference_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

@@ -11,6 +11,7 @@ import prisma from '../../config/database.config'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
+import config from '../../config/config'
 
 type TCompleteOngoingJobParams = {
   jobId: string
@@ -30,6 +31,10 @@ const getAllOngoingJobs = async (req: AuthRequest, res: Response): Promise<Respo
     const ongoingJobs = await prisma.jobApplications.findMany({
       where: { userId, status: 'HIRED' },
       include: { Job: true }
+    })
+
+    ongoingJobs.forEach((i) => {
+      i.Job.bannerImage = `${config.S3_ACCESS_URL}/${i.Job.bannerImage}`
     })
 
     const response = okResponse(ongoingJobs)

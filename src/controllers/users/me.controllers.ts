@@ -14,7 +14,13 @@ import prisma from '../../config/database.config'
 import stripe from '../../config/stripe.config'
 import s3 from '../../config/s3.config'
 
-import type { Users, AthleteInfo, BusinessInfo } from '@prisma/client'
+import type {
+  Users,
+  AthleteInfo,
+  BusinessInfo,
+  UserAthleticAchievements,
+  UserGallery
+} from '@prisma/client'
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import config from '../../config/config'
@@ -25,6 +31,8 @@ type UserProfileWithAge =
       age?: number | null
       AthleteInfo: AthleteInfo | null
       BusinessInfo: BusinessInfo | null
+      UserAthleticAchievements: UserAthleticAchievements[]
+      UserGallery: UserGallery[]
     })
   | null
 
@@ -87,7 +95,9 @@ const getMyProfile = async (req: AuthRequest, res: Response): Promise<Response> 
       where: { id: userId },
       include: {
         AthleteInfo: true,
-        BusinessInfo: true
+        BusinessInfo: true,
+        UserAthleticAchievements: true,
+        UserGallery: true
       }
     })
 
@@ -100,8 +110,12 @@ const getMyProfile = async (req: AuthRequest, res: Response): Promise<Response> 
       user.age = calculateAge(user.dateOfBirth)
     }
 
-    if (user.profilePicture !== null) {
-      user.profilePicture = `${config.S3_ACCESS_URL}/${user.profilePicture}`
+    user.profilePicture &&= `${config.S3_ACCESS_URL}/${user.profilePicture}`
+
+    if (user.UserGallery.length > 0) {
+      user.UserGallery.forEach((i) => {
+        i.path = `${config.S3_ACCESS_URL}/${i.path}`
+      })
     }
 
     const response = okResponse(user)
@@ -348,11 +362,13 @@ const updateAthleteInfo = async (
       return res.status(response.status.code).json(response)
     }
 
-    const existingSport = await prisma.sports.findUnique({ where: { id: data.sportId } })
+    if (data.sportId !== undefined) {
+      const existingSport = await prisma.sports.findUnique({ where: { id: data.sportId } })
 
-    if (existingSport == null) {
-      const response = notFoundResponse(`Sport with id: ${data.sportId} not found.`)
-      return res.status(response.status.code).json(response)
+      if (existingSport == null) {
+        const response = notFoundResponse('sports not found.')
+        return res.status(response.status.code).json(response)
+      }
     }
 
     await prisma.users.update({
