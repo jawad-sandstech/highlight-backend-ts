@@ -91,6 +91,8 @@ const getAllAthletes = async (
       take
     })
 
+    athletes.forEach((i) => (i.profilePicture &&= `${config.S3_ACCESS_URL}/${i.profilePicture}`))
+
     if (rating !== undefined) {
       const athletesWithAverageRating = athletes.map((athlete: any) => {
         const totalRating = athlete.ReceivedRatings.reduce(
