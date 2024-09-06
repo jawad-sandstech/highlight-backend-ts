@@ -13,6 +13,7 @@ import type { Response } from 'express'
 import type { JOB_APPLICATION_STATUS } from '@prisma/client'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
+import sendNotification from '../../utils/sendNotification'
 
 type TGetAllApplicationsQuery = {
   status?: JOB_APPLICATION_STATUS
@@ -127,6 +128,14 @@ const updateStatusOfApplications = async (
         where: { id: application.id },
         data: { status }
       })
+
+      await sendNotification(
+        application.userId,
+        'Application update',
+        `Application rejected on "${application.Job.title}"`,
+        'APPLICATION_REJECTED',
+        { jobId: application.Job.id, applicationId: application.id }
+      )
     }
 
     if (status === 'WAIT_LISTED') {
@@ -139,6 +148,14 @@ const updateStatusOfApplications = async (
         where: { id: application.id },
         data: { status }
       })
+
+      await sendNotification(
+        application.userId,
+        'Application update',
+        `Application wait-listed on "${application.Job.title}"`,
+        'APPLICATION_WAIT_LISTED',
+        { jobId: application.Job.id, applicationId: application.id }
+      )
     }
 
     if (status === 'HIRED') {
@@ -151,6 +168,14 @@ const updateStatusOfApplications = async (
         where: { id: application.id },
         data: { status }
       })
+
+      await sendNotification(
+        application.userId,
+        'Application update',
+        `Your Application got selected on "${application.Job.title}"`,
+        'APPLICATION_SELECTED',
+        { jobId: application.Job.id, applicationId: application.id }
+      )
 
       const chat = await prisma.chats.create({
         data: {

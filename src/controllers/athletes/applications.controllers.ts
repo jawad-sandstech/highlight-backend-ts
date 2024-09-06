@@ -11,6 +11,7 @@ import prisma from '../../config/database.config'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
+import sendNotification from '../../utils/sendNotification'
 
 type TCreateApplicationBody = {
   jobId: number
@@ -86,6 +87,14 @@ const createApplication = async (
     const application = await prisma.jobApplications.create({
       data: { userId, jobId }
     })
+
+    await sendNotification(
+      job.userId,
+      'New Application',
+      `New application on "${job.title}"`,
+      'JOB_APPLICATION',
+      { jobId: job.id, applicationId: application.id }
+    )
 
     const response = createSuccessResponse(application)
     return res.status(response.status.code).json(response)

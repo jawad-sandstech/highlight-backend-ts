@@ -192,7 +192,9 @@ const handleSocketIOCommunication = async (
       void sendNotification(
         userId,
         `New Message From ${chat.name ?? otherParticipantName}`,
-        message.content ?? '...'
+        message.content ?? 'attachment',
+        chat.type === 'PRIVATE' ? 'PRIVATE_CHAT' : 'GROUP_CHAT',
+        { chatId: chat.id }
       )
     }
   }

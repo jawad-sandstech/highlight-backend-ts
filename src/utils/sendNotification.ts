@@ -1,10 +1,14 @@
 import firebase from '../config/firebase.config'
 import prisma from '../config/database.config'
 
+import type { NOTIFICATION_TYPE } from '@prisma/client'
+
 const sendNotification = async (
   userId: number,
   title: string,
-  description: string
+  description: string,
+  notificationType: NOTIFICATION_TYPE,
+  metadata?: object
 ): Promise<void> => {
   try {
     const user = await prisma.users.findUnique({
@@ -16,7 +20,9 @@ const sendNotification = async (
       data: {
         userId,
         title,
-        description
+        description,
+        notificationType,
+        metadata
       }
     })
 
