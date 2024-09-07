@@ -14,6 +14,7 @@ import type { JOB_APPLICATION_STATUS } from '@prisma/client'
 
 import type { AuthRequest } from '../../interfaces/auth-request'
 import sendNotification from '../../utils/sendNotification'
+import config from '../../config/config'
 
 type TGetAllApplicationsQuery = {
   status?: JOB_APPLICATION_STATUS
@@ -69,6 +70,10 @@ const getAllApplications = async (
         Job: true,
         User: true
       }
+    })
+
+    jobApplications.forEach((i) => {
+      i.User.profilePicture &&= `${config.S3_ACCESS_URL}/${i.User.profilePicture}`
     })
 
     const response = okResponse(jobApplications)
@@ -163,6 +168,11 @@ const updateStatusOfApplications = async (
         const response = badRequestResponse('cannot change status')
         return res.status(response.status.code).json(response)
       }
+
+      await prisma.jobs.update({
+        where: { id: application.Job.id },
+        data: { status: 'FILLED' }
+      })
 
       await prisma.jobApplications.update({
         where: { id: application.id },

@@ -63,6 +63,7 @@ model Users {
   OrganizedSchedules       UserSchedules[]            @relation("OrganizerSchedules")
   AttendedSchedules        UserSchedules[]            @relation("AttendeeSchedules")
   MessageStatus            MessageStatus[]
+  UserTax                  UserTax?
 }
 
 model AthleteInfo {
@@ -118,6 +119,19 @@ model UserOTP {
   expirationDateTime DateTime
   createdAt          DateTime @default(now())
   User               Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserTax {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  firstName   String
+  lastName    String
+  dateOfBirth DateTime
+  address     String
+  SSN         String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  User        Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserAthleticAchievements {

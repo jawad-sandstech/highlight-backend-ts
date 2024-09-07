@@ -2,6 +2,7 @@ import express from 'express'
 
 import authRouter from './auth'
 import meRouter from './me'
+import taxRouter from './tax'
 import galleryRouter from './gallery'
 import preferencesRouter from './preferences'
 import jobsRouter from './jobs'
@@ -15,6 +16,7 @@ const router = express.Router()
 // routes
 router.use('/auth', authRouter)
 router.use('/me', meRouter)
+router.use('/tax', taxRouter)
 router.use('/gallery', galleryRouter)
 router.use('/preferences', preferencesRouter)
 router.use('/jobs', jobsRouter)
