@@ -138,7 +138,14 @@ const getSingleAthlete = async (
   try {
     const athlete = await prisma.users.findUnique({
       where: { id: athleteId, role: 'ATHLETE' },
-      include: { AthleteInfo: true, UserGallery: true }
+      include: {
+        AthleteInfo: {
+          include: {
+            Sport: true
+          }
+        },
+        UserGallery: true
+      }
     })
 
     if (athlete === null) {
@@ -167,7 +174,7 @@ const getSingleAthlete = async (
     const athleteWithAverageRating = {
       ...athlete,
       age: calculateAge(athlete.dateOfBirth),
-      averageReceivedRating: averageRating
+      averageReceivedRating: averageRating ?? 0
     }
 
     const response = okResponse(athleteWithAverageRating)

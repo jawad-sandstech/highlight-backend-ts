@@ -94,7 +94,11 @@ const getMyProfile = async (req: AuthRequest, res: Response): Promise<Response> 
     const user: UserProfileWithAge = await prisma.users.findUnique({
       where: { id: userId },
       include: {
-        AthleteInfo: true,
+        AthleteInfo: {
+          include: {
+            Sport: true
+          }
+        },
         BusinessInfo: true,
         UserAthleticAchievements: true,
         UserGallery: true
@@ -118,7 +122,19 @@ const getMyProfile = async (req: AuthRequest, res: Response): Promise<Response> 
       })
     }
 
-    const response = okResponse(user)
+    const {
+      _avg: { rating: averageRating }
+    } = await prisma.userRating.aggregate({
+      _avg: { rating: true },
+      where: { athleteId: userId }
+    })
+
+    const userWithAverageRating = {
+      ...user,
+      averageReceivedRating: averageRating ?? 0
+    }
+
+    const response = okResponse(userWithAverageRating)
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {

@@ -17,7 +17,14 @@ const getAllClosedJobs = async (req: AuthRequest, res: Response): Promise<Respon
 
   try {
     const closedJobs = await prisma.jobApplications.findMany({
-      where: { userId, status: 'COMPLETED' }
+      where: { userId, status: 'COMPLETED' },
+      select: {
+        id: true,
+        userId: true,
+        createdAt: true,
+        updatedAt: true,
+        Job: true
+      }
     })
 
     const response = createSuccessResponse(closedJobs)
