@@ -218,7 +218,7 @@ const uploadPicture = async (req: AuthRequest, res: Response): Promise<Response>
 
     const command = new PutObjectCommand({
       Bucket: config.S3_BUCKET_NAME,
-      Key: `${folderName}/${randomImageName}`,
+      Key: `${folderName}/${randomImageName}.${file.mimetype.split('/')[1]}`,
       Body: file.buffer,
       ContentType: file.mimetype
     })
@@ -227,7 +227,7 @@ const uploadPicture = async (req: AuthRequest, res: Response): Promise<Response>
 
     await prisma.users.update({
       where: { id: userId },
-      data: { profilePicture: `${folderName}/${randomImageName}` }
+      data: { profilePicture: `${folderName}/${randomImageName}.${file.mimetype.split('/')[1]}` }
     })
 
     const response = updateSuccessResponse()

@@ -95,6 +95,22 @@ CREATE TABLE `UserOTP` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `UserTax` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `userId` INTEGER NOT NULL,
+    `firstName` VARCHAR(191) NOT NULL,
+    `lastName` VARCHAR(191) NOT NULL,
+    `dateOfBirth` DATETIME(3) NOT NULL,
+    `address` VARCHAR(191) NOT NULL,
+    `SSN` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `UserTax_userId_key`(`userId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `UserAthleticAchievements` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
@@ -212,6 +228,9 @@ CREATE TABLE `UserNotifications` (
     `userId` INTEGER NOT NULL,
     `title` TEXT NOT NULL,
     `description` TEXT NOT NULL,
+    `hasSeen` BOOLEAN NOT NULL DEFAULT false,
+    `notificationType` ENUM('PRIVATE_CHAT', 'GROUP_CHAT', 'JOB_APPLICATION', 'APPLICATION_WAIT_LISTED', 'APPLICATION_REJECTED', 'APPLICATION_SELECTED', 'JOB_COMPLETED') NOT NULL,
+    `metadata` JSON NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -356,6 +375,9 @@ ALTER TABLE `UserPasswords` ADD CONSTRAINT `UserPasswords_userId_fkey` FOREIGN K
 ALTER TABLE `UserOTP` ADD CONSTRAINT `UserOTP_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `UserTax` ADD CONSTRAINT `UserTax_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `UserAthleticAchievements` ADD CONSTRAINT `UserAthleticAchievements_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -393,6 +415,9 @@ ALTER TABLE `UserSavedJobs` ADD CONSTRAINT `UserSavedJobs_userId_fkey` FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE `UserSavedJobs` ADD CONSTRAINT `UserSavedJobs_jobId_fkey` FOREIGN KEY (`jobId`) REFERENCES `Jobs`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `UserNotifications` ADD CONSTRAINT `UserNotifications_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `UserHiddenJobs` ADD CONSTRAINT `UserHiddenJobs_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
