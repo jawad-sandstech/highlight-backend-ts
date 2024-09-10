@@ -64,6 +64,7 @@ model Users {
   AttendedSchedules        UserSchedules[]            @relation("AttendeeSchedules")
   MessageStatus            MessageStatus[]
   UserTax                  UserTax?
+  UserNotifications        UserNotifications[]
 }
 
 model AthleteInfo {
@@ -250,6 +251,7 @@ model UserNotifications {
   metadata         Json?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+  User             Users             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserHiddenJobs {

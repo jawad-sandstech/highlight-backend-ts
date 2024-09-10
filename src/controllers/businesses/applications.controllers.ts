@@ -139,7 +139,7 @@ const updateStatusOfApplications = async (
         'Application update',
         `Application rejected on "${application.Job.title}"`,
         'APPLICATION_REJECTED',
-        { jobId: application.Job.id, applicationId: application.id }
+        { userRole: 'ATHLETE', jobId: application.Job.id, applicationId: application.id }
       )
     }
 
@@ -159,7 +159,7 @@ const updateStatusOfApplications = async (
         'Application update',
         `Application wait-listed on "${application.Job.title}"`,
         'APPLICATION_WAIT_LISTED',
-        { jobId: application.Job.id, applicationId: application.id }
+        { userRole: 'ATHLETE', jobId: application.Job.id, applicationId: application.id }
       )
     }
 
@@ -184,7 +184,7 @@ const updateStatusOfApplications = async (
         'Application update',
         `Your Application got selected on "${application.Job.title}"`,
         'APPLICATION_SELECTED',
-        { jobId: application.Job.id, applicationId: application.id }
+        { userRole: 'ATHLETE', jobId: application.Job.id, applicationId: application.id }
       )
 
       const chat = await prisma.chats.create({

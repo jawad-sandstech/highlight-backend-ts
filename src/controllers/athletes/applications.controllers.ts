@@ -93,7 +93,7 @@ const createApplication = async (
       'New Application',
       `New application on "${job.title}"`,
       'JOB_APPLICATION',
-      { jobId: job.id, applicationId: application.id }
+      { userRole: 'BUSINESS', jobId: job.id, applicationId: application.id }
     )
 
     const response = createSuccessResponse(application)

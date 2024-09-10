@@ -339,7 +339,10 @@ const getAllMessages = async (
 
     const exitedAt = participant.exitedAt ?? new Date()
 
-    const messages = chat.Messages.filter((message) => message.createdAt <= exitedAt)
+    const messages = chat.Messages.filter((message) => message.createdAt <= exitedAt).map((i) => ({
+      ...i,
+      attachment: `${config.S3_ACCESS_URL}/${i.attachment}`
+    }))
 
     const chatWithMessages = {
       ...chat,
@@ -441,13 +444,13 @@ const getAllNonParticipants = async (
 
     const participants = await prisma.participants.findMany({
       where: { chatId, exitedAt: null },
-      select: { id: true }
+      select: { userId: true }
     })
 
     const users = await prisma.users.findMany({
       where: {
         id: {
-          notIn: participants.map((i) => i.id)
+          notIn: participants.map((i) => i.userId)
         }
       }
     })

@@ -29,5 +29,6 @@ router.post(
 )
 router.post('/verify-otp', validateRequest(authValidations.verifyOtp), authControllers.verifyOtp)
 router.post('/resend-otp', validateRequest(authValidations.resendOtp), authControllers.resendOtp)
+router.post('/logout', validateRequest(authValidations.logout), authControllers.logout)
 
 export default router

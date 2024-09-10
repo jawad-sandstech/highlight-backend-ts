@@ -613,6 +613,35 @@ const resendOtp = async (
   }
 }
 
+const logout = async (req: AuthRequest, res: Response): Promise<Response> => {
+  const user = req.user
+
+  if (user === undefined) {
+    const response = unauthorizedResponse()
+    return res.status(response.status.code).json(response)
+  }
+
+  const { userId } = user
+
+  try {
+    await prisma.users.update({
+      where: { id: userId },
+      data: { fcmToken: null }
+    })
+    const response = okResponse(null, 'logout successfully')
+    return res.status(response.status.code).json(response)
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message)
+      const response = serverErrorResponse(error.message)
+      return res.status(response.status.code).json(response)
+    } else {
+      const response = serverErrorResponse('An unexpected error occurred')
+      return res.status(response.status.code).json(response)
+    }
+  }
+}
+
 export default {
   register,
   login,
@@ -620,5 +649,6 @@ export default {
   resetPassword,
   changePassword,
   verifyOtp,
-  resendOtp
+  resendOtp,
+  logout
 }
