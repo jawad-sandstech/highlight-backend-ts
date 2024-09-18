@@ -324,6 +324,9 @@ const getAllMessages = async (
                 profilePicture: true
               }
             }
+          },
+          orderBy: {
+            createdAt: 'desc'
           }
         }
       }
