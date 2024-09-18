@@ -99,7 +99,7 @@ const userHasAccessToChat = (userId: number, chat: TChatWithParticipants): boole
 }
 
 const augmentMessageWithImageUrl = (message: Messages): Messages => {
-  message.attachment &&= config.S3_ACCESS_URL + message.attachment
+  message.attachment &&= `${config.S3_ACCESS_URL}/${message.attachment}`
 
   return message
 }
@@ -688,6 +688,8 @@ const createMessage = async (
       const messageCreationPromises = attachmentPaths.map(async (attachmentPath) => {
         const message = await createMessageInChat(chatId, userId, 'attachment', attachmentPath)
         const messageWithImageUrl = augmentMessageWithImageUrl(message)
+
+        console.log('messageWithImageUrl', messageWithImageUrl)
 
         void handleSocketIOCommunication(chatId, messageWithImageUrl, chat, userId)
       })
