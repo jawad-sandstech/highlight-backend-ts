@@ -23,8 +23,6 @@ model Users {
   gender                   GENDERS?
   address                  String?                    @db.Text
   phoneNumber              String?
-  instagramUsername        String?
-  instagramFollowersCount  Int?
   zoomId                   String?
   role                     USER_ROLES
   loginMethod              LOGIN_METHODS
@@ -68,20 +66,21 @@ model Users {
 }
 
 model AthleteInfo {
-  id                Int                 @id @default(autoincrement())
-  userId            Int                 @unique
-  instagramUsername String?
-  experience        ATHLETE_EXPERIENCE?
-  schoolName        String?
-  universityName    String?
-  sportId           Int?
-  position          String?
-  attachment        String?             @db.Text
-  bio               String?             @db.Text
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  User              Users               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Sport             Sports?             @relation(fields: [sportId], references: [id])
+  id                      Int                 @id @default(autoincrement())
+  userId                  Int                 @unique
+  instagramUsername       String?
+  instagramFollowersCount Int?
+  experience              ATHLETE_EXPERIENCE?
+  schoolName              String?
+  universityName          String?
+  sportId                 Int?
+  position                String?
+  attachment              String?             @db.Text
+  bio                     String?             @db.Text
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  User                    Users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Sport                   Sports?             @relation(fields: [sportId], references: [id])
 }
 
 model BusinessInfo {

@@ -77,6 +77,7 @@ const updateJob = Joi.object({
     title: Joi.string().optional(),
     description: Joi.string().optional(),
     requiredQualification: Joi.array().items(Joi.string()).min(1).optional(),
+    salary: Joi.number().optional(),
     sportId: Joi.number().optional(),
     type: Joi.string()
       .valid('SOCIAL_MEDIA', 'MEET_AND_GREET', 'AUTOGRAPHS', 'PHOTO_SHOOTS', 'OTHER')

@@ -9,6 +9,7 @@ import {
   badRequestResponse,
   unauthorizedResponse
 } from 'generic-response'
+import axios from 'axios'
 
 import prisma from '../../config/database.config'
 import stripe from '../../config/stripe.config'
@@ -46,6 +47,7 @@ type TUpdateProfileBody = {
 }
 
 type TUpdateAthleteInfoBody = {
+  instagramUsername?: string
   schoolName?: string
   universityName?: string
   sportId?: number
@@ -78,6 +80,33 @@ type TUpdateBusinessInfoBody = {
   phoneNumber?: string
   email?: string
   website?: string
+}
+
+const getInstagramFollowerCount = async (username: string): Promise<number | string> => {
+  const url = `https://i.instagram.com/api/v1/users/web_profile_info/?username=${username}`
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent':
+          'Instagram 76.0.0.15.395 Android (24/7.0; 640dpi; 1440x2560; samsung; SM-G930F; herolte; samsungexynos8890; en_US; 138226743)'
+      }
+    })
+
+    const followerCount: number = response.data.data.user.edge_followed_by.count
+    console.log(`Follower count for ${username}: ${followerCount}`)
+    return followerCount
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      if (error.response !== undefined && error.response.status === 404) {
+        console.log(`User account for ${username} does not exist (404).`)
+        return 'User Not Found'
+      }
+    }
+    // Log other Axios errors and fallback for non-Axios errors
+    console.error('Error fetching follower count')
+    return 'Error Occurred'
+  }
 }
 
 const getMyProfile = async (req: AuthRequest, res: Response): Promise<Response> => {
@@ -385,6 +414,22 @@ const updateAthleteInfo = async (
         const response = notFoundResponse('sports not found.')
         return res.status(response.status.code).json(response)
       }
+    }
+
+    if (data.instagramUsername !== undefined) {
+      const instagramFollowersCount = await getInstagramFollowerCount(data.instagramUsername)
+
+      if (typeof instagramFollowersCount !== 'number') {
+        const response = badRequestResponse('instagram username not found')
+        return res.status(response.status.code).json(response)
+      }
+
+      await prisma.athleteInfo.update({
+        where: { id: user.AthleteInfo?.id },
+        data: {
+          instagramFollowersCount
+        }
+      })
     }
 
     await prisma.users.update({

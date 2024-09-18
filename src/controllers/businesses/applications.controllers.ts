@@ -124,7 +124,7 @@ const updateStatusOfApplications = async (
     }
 
     if (status === 'REJECTED') {
-      if (application.status !== 'APPLIED') {
+      if (application.status !== 'APPLIED' && application.status !== 'WAIT_LISTED') {
         const response = badRequestResponse('cannot change status')
         return res.status(response.status.code).json(response)
       }
