@@ -1,17 +1,28 @@
 import prisma from '../../config/database.config'
 
 import type { Socket } from 'socket.io'
-import type { Chats, Participants } from '@prisma/client'
+import type { Chats, Participants, Users, Messages } from '@prisma/client'
 
 type TChatWithParticipants = Chats & {
-  Participants: Participants[]
+  Participants: Array<Participants & { User: Users }>
+  Messages: Messages[]
 }
 
 const getChatById = async (chatId: number): Promise<TChatWithParticipants | null> => {
   const chat = await prisma.chats.findUnique({
     where: { id: chatId },
     include: {
-      Participants: true
+      Participants: {
+        include: {
+          User: true
+        }
+      },
+      Messages: {
+        take: 1,
+        orderBy: {
+          createdAt: 'desc'
+        }
+      }
     }
   })
 
@@ -58,6 +69,16 @@ const joinChatHandler = async (socket: Socket, chatId: number): Promise<void> =>
       where: { userId: socket.userId },
       data: { seen: true }
     })
+
+    const chatSummary = {
+      id: chat.id,
+      type: chat.type,
+      name: chat.name ?? chat.Participants.find((i) => i.userId !== socket.userId)?.User.fullName,
+      lastMessage: chat.Messages[0],
+      unreadMessagesCount: 0
+    }
+
+    socket.emit('updateChat', chatSummary)
 
     console.log(`User ${socket.userId} joined chat ${chatId}`)
   } catch (error) {

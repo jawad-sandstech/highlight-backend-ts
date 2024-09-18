@@ -180,7 +180,11 @@ const handleSocketIOCommunication = async (
       const chatSummary = {
         id: chat.id,
         type: chat.type,
-        name: chat.name ?? otherParticipantName,
+        name:
+          // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+          chat.name ?? userId === socket.userId
+            ? chat.Participants.find((i) => i.userId !== userId)?.User.fullName
+            : chat.Participants.find((i) => i.userId === userId)?.User.fullName,
         lastMessage: message,
         unreadMessagesCount
       }

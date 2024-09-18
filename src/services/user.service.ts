@@ -81,7 +81,7 @@ const createUser = async (data: TCreateUser): Promise<Users> => {
       })
     } else {
       await prisma.businessInfo.create({
-        data: { userId: user.id }
+        data: { userId: user.id, isPremium: true }
       })
     }
 

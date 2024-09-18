@@ -326,7 +326,6 @@ const createJob = async (
     })
 
     if (isDraft === 'true') {
-      console.log('first')
       const response = createSuccessResponse(job)
       return res.status(response.status.code).json(response)
     }
