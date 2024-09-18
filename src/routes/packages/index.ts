@@ -1,10 +1,10 @@
 import express from 'express'
 
-import sportsRouter from './sports'
+import packagesRouter from './packages'
 
 const router = express.Router()
 
 // routes
-router.use('/', sportsRouter)
+router.use('/', packagesRouter)
 
 export default router

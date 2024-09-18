@@ -7,6 +7,7 @@ import sportsRouter from './sports'
 import jobsRouter from './jobs'
 import businessesRouter from './businesses'
 import athletesRouter from './athletes'
+// import packagesRouter from './packages'
 import feedbacksRouter from './feedbacks'
 
 const router = express.Router()
@@ -19,6 +20,7 @@ router.use('/sports', sportsRouter)
 router.use('/jobs', jobsRouter)
 router.use('/businesses', businessesRouter)
 router.use('/athletes', athletesRouter)
+// router.use('/packages', packagesRouter)
 router.use('/feedbacks', feedbacksRouter)
 
 export default router

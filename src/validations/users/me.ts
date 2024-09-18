@@ -45,7 +45,7 @@ const updateAthleteInfo = Joi.object({
     instagramUsername: Joi.string().optional(),
     schoolName: Joi.string().optional(),
     universityName: Joi.string().optional(),
-    sportSubCategoryId: Joi.number().optional(),
+    sportId: Joi.number().optional(),
     experience: Joi.string()
       .valid(
         'BEGINNER',

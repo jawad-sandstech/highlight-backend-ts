@@ -5,11 +5,11 @@ import prisma from '../../config/database.config'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
 
-const getAllSportSubCategories = async (req: AuthRequest, res: Response): Promise<Response> => {
+const getAllPackages = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const sportSubCategories = await prisma.sportSubCategories.findMany()
+    const packages = await prisma.packages.findMany()
 
-    const response = okResponse(sportSubCategories)
+    const response = okResponse({ packages })
     return res.status(response.status.code).json(response)
   } catch (error) {
     if (error instanceof Error) {
@@ -24,5 +24,5 @@ const getAllSportSubCategories = async (req: AuthRequest, res: Response): Promis
 }
 
 export default {
-  getAllSportSubCategories
+  getAllPackages
 }

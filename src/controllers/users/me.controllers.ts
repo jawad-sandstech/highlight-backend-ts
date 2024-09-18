@@ -20,9 +20,7 @@ import type {
   AthleteInfo,
   BusinessInfo,
   UserAthleticAchievements,
-  UserGallery,
-  SportSubCategories,
-  Sports
+  UserGallery
 } from '@prisma/client'
 import type { Response } from 'express'
 import type { AuthRequest } from '../../interfaces/auth-request'
@@ -32,11 +30,7 @@ import calculateAge from '../../utils/calculateAge'
 type UserProfileWithAge =
   | (Users & {
       age?: number | null
-      AthleteInfo:
-        | (AthleteInfo & {
-            SportSubCategory: (SportSubCategories & { Sport: Sports }) | null
-          })
-        | null
+      AthleteInfo: AthleteInfo | null
       BusinessInfo: BusinessInfo | null
       UserAthleticAchievements: UserAthleticAchievements[]
       UserGallery: UserGallery[]
@@ -56,7 +50,7 @@ type TUpdateAthleteInfoBody = {
   instagramUsername?: string
   schoolName?: string
   universityName?: string
-  sportSubCategoryId?: number
+  sportId?: number
   experience?:
     | 'BEGINNER'
     | 'INTERMEDIATE'
@@ -131,11 +125,7 @@ const getMyProfile = async (req: AuthRequest, res: Response): Promise<Response> 
       include: {
         AthleteInfo: {
           include: {
-            SportSubCategory: {
-              include: {
-                Sport: true
-              }
-            }
+            Sport: true
           }
         },
         BusinessInfo: true,
@@ -417,10 +407,8 @@ const updateAthleteInfo = async (
       return res.status(response.status.code).json(response)
     }
 
-    if (data.sportSubCategoryId !== undefined) {
-      const existingSport = await prisma.sportSubCategories.findUnique({
-        where: { id: data.sportSubCategoryId }
-      })
+    if (data.sportId !== undefined) {
+      const existingSport = await prisma.sports.findUnique({ where: { id: data.sportId } })
 
       if (existingSport == null) {
         const response = notFoundResponse('sports not found.')
