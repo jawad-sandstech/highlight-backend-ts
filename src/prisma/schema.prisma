@@ -73,14 +73,14 @@ model AthleteInfo {
   experience              ATHLETE_EXPERIENCE?
   schoolName              String?
   universityName          String?
-  sportId                 Int?
+  sportSubCategoryId      Int?
   position                String?
   attachment              String?             @db.Text
   bio                     String?             @db.Text
   createdAt               DateTime            @default(now())
   updatedAt               DateTime            @updatedAt
   User                    Users               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Sport                   Sports?             @relation(fields: [sportId], references: [id])
+  SportSubCategory        SportSubCategories? @relation(fields: [sportSubCategoryId], references: [id])
 }
 
 model BusinessInfo {
@@ -178,11 +178,21 @@ model Transactions {
 }
 
 model Sports {
+  id                 Int                  @id @default(autoincrement())
+  name               String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  Jobs               Jobs[]
+  SportSubCategories SportSubCategories[]
+}
+
+model SportSubCategories {
   id          Int           @id @default(autoincrement())
+  sportId     Int
   name        String
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  Jobs        Jobs[]
+  Sport       Sports        @relation(fields: [sportId], references: [id], onDelete: Cascade)
   AthleteInfo AthleteInfo[]
 }
 
