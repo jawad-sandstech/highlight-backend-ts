@@ -54,8 +54,12 @@ const getAllAthletes = async (
       if (sportIds !== undefined) {
         const sportIdList = sportIds.split(',').map(Number)
 
-        whereClause.AthleteInfo.sportId = {
-          in: sportIdList
+        const sportSubCategories = await prisma.sportSubCategories.findMany({
+          where: { sportId: { in: sportIdList } }
+        })
+
+        whereClause.AthleteInfo.sportSubCategoryId = {
+          in: sportSubCategories.map((i) => i.id)
         }
       }
 
@@ -148,6 +152,7 @@ const getSingleAthlete = async (
             }
           }
         },
+        UserAthleticAchievements: true,
         UserGallery: true
       }
     })
