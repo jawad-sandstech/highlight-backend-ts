@@ -141,7 +141,11 @@ const getSingleAthlete = async (
       include: {
         AthleteInfo: {
           include: {
-            Sport: true
+            SportSubCategory: {
+              include: {
+                Sport: true
+              }
+            }
           }
         },
         UserGallery: true

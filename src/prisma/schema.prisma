@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+    provider = "mysql"
+    url      = env("DATABASE_URL")
 }
 
 // generator dbml {
@@ -16,430 +16,440 @@ datasource db {
 // }
 
 model Users {
-  id                       Int                        @id @default(autoincrement())
-  fullName                 String?
-  profilePicture           String?                    @db.Text
-  dateOfBirth              DateTime?
-  gender                   GENDERS?
-  address                  String?                    @db.Text
-  phoneNumber              String?
-  zoomId                   String?
-  role                     USER_ROLES
-  loginMethod              LOGIN_METHODS
-  socialToken              String?
-  email                    String                     @unique
-  stripeCustomerId         String                     @unique
-  stripeAccountId          String?
-  isEmailVerified          Boolean                    @default(false)
-  isStripeVerified         Boolean                    @default(false)
-  isProfileComplete        Boolean                    @default(false)
-  hasUpdatedAthleteInfo    Boolean                    @default(false)
-  hasUpdatedBusinessInfo   Boolean                    @default(false)
-  fcmToken                 String?                    @db.Text
-  createdAt                DateTime                   @default(now())
-  updatedAt                DateTime                   @updatedAt
-  UserPasswords            UserPasswords[]
-  UserOTP                  UserOTP[]
-  UserAthleticAchievements UserAthleticAchievements[]
-  UserGallery              UserGallery[]
-  Jobs                     Jobs[]
-  UserSavedJobs            UserSavedJobs[]
-  UserHiddenJobs           UserHiddenJobs[]
-  JobApplications          JobApplications[]
-  Transactions             Transactions[]
-  AthleteInfo              AthleteInfo?
-  BusinessInfo             BusinessInfo?
-  ReportedJobs             ReportedJobs[]
-  Participants             Participants[]
-  Messages                 Messages[]
-  UserPreference           UserPreference?
-  Feedback                 Feedback[]
-  FavoriteBusinesses       UserFavoriteBusinesses[]   @relation("Business")
-  BusinessesFavoritedBy    UserFavoriteBusinesses[]   @relation("User")
-  GivenRatings             UserRating[]               @relation("Business")
-  ReceivedRatings          UserRating[]               @relation("Athlete")
-  OrganizedSchedules       UserSchedules[]            @relation("OrganizerSchedules")
-  AttendedSchedules        UserSchedules[]            @relation("AttendeeSchedules")
-  MessageStatus            MessageStatus[]
-  UserTax                  UserTax?
-  UserNotifications        UserNotifications[]
+    id                       Int                        @id @default(autoincrement())
+    fullName                 String?
+    profilePicture           String?                    @db.Text
+    dateOfBirth              DateTime?
+    gender                   GENDERS?
+    address                  String?                    @db.Text
+    phoneNumber              String?
+    zoomId                   String?
+    role                     USER_ROLES
+    loginMethod              LOGIN_METHODS
+    socialToken              String?
+    email                    String                     @unique
+    stripeCustomerId         String                     @unique
+    stripeAccountId          String?
+    isEmailVerified          Boolean                    @default(false)
+    isStripeVerified         Boolean                    @default(false)
+    isProfileComplete        Boolean                    @default(false)
+    hasUpdatedAthleteInfo    Boolean                    @default(false)
+    hasUpdatedBusinessInfo   Boolean                    @default(false)
+    fcmToken                 String?                    @db.Text
+    createdAt                DateTime                   @default(now())
+    updatedAt                DateTime                   @updatedAt
+    UserPasswords            UserPasswords[]
+    UserOTP                  UserOTP[]
+    UserAthleticAchievements UserAthleticAchievements[]
+    UserGallery              UserGallery[]
+    Jobs                     Jobs[]
+    UserSavedJobs            UserSavedJobs[]
+    UserHiddenJobs           UserHiddenJobs[]
+    JobApplications          JobApplications[]
+    Transactions             Transactions[]
+    AthleteInfo              AthleteInfo?
+    BusinessInfo             BusinessInfo?
+    ReportedJobs             ReportedJobs[]
+    Participants             Participants[]
+    Messages                 Messages[]
+    UserPreference           UserPreference?
+    Feedback                 Feedback[]
+    FavoriteBusinesses       UserFavoriteBusinesses[]   @relation("Business")
+    BusinessesFavoritedBy    UserFavoriteBusinesses[]   @relation("User")
+    GivenRatings             UserRating[]               @relation("Business")
+    ReceivedRatings          UserRating[]               @relation("Athlete")
+    OrganizedSchedules       UserSchedules[]            @relation("OrganizerSchedules")
+    AttendedSchedules        UserSchedules[]            @relation("AttendeeSchedules")
+    MessageStatus            MessageStatus[]
+    UserTax                  UserTax?
+    UserNotifications        UserNotifications[]
 }
 
 model AthleteInfo {
-  id                      Int                 @id @default(autoincrement())
-  userId                  Int                 @unique
-  instagramUsername       String?
-  instagramFollowersCount Int?
-  experience              ATHLETE_EXPERIENCE?
-  schoolName              String?
-  universityName          String?
-  sportId                 Int?
-  position                String?
-  attachment              String?             @db.Text
-  bio                     String?             @db.Text
-  createdAt               DateTime            @default(now())
-  updatedAt               DateTime            @updatedAt
-  User                    Users               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Sport                   Sports?             @relation(fields: [sportId], references: [id])
+    id                      Int                 @id @default(autoincrement())
+    userId                  Int                 @unique
+    instagramUsername       String?
+    instagramFollowersCount Int?
+    experience              ATHLETE_EXPERIENCE?
+    schoolName              String?
+    universityName          String?
+    sportSubCategoryId      Int?
+    position                String?
+    attachment              String?             @db.Text
+    bio                     String?             @db.Text
+    createdAt               DateTime            @default(now())
+    updatedAt               DateTime            @updatedAt
+    User                    Users               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    SportSubCategory        SportSubCategories? @relation(fields: [sportSubCategoryId], references: [id])
 }
 
 model BusinessInfo {
-  id               Int      @id @default(autoincrement())
-  userId           Int      @unique
-  organizationName String?
-  industryType     String?
-  founded          String?
-  overview         String?  @db.Text
-  phoneNumber      String?
-  email            String?
-  website          String?
-  address          String?
-  zoomId           String?
-  isPremium        Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  User             Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id               Int      @id @default(autoincrement())
+    userId           Int      @unique
+    organizationName String?
+    industryType     String?
+    founded          String?
+    overview         String?  @db.Text
+    phoneNumber      String?
+    email            String?
+    website          String?
+    address          String?
+    zoomId           String?
+    isPremium        Boolean  @default(false)
+    createdAt        DateTime @default(now())
+    updatedAt        DateTime @updatedAt
+    User             Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserPasswords {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  password  String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    password  String
+    isActive  Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserOTP {
-  id                 Int      @id @default(autoincrement())
-  userId             Int
-  otp                String
-  isExpired          Boolean  @default(false)
-  expirationDateTime DateTime
-  createdAt          DateTime @default(now())
-  User               Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id                 Int      @id @default(autoincrement())
+    userId             Int
+    otp                String
+    isExpired          Boolean  @default(false)
+    expirationDateTime DateTime
+    createdAt          DateTime @default(now())
+    User               Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserTax {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @unique
-  firstName   String
-  lastName    String
-  dateOfBirth DateTime
-  address     String
-  SSN         String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  User        Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id          Int      @id @default(autoincrement())
+    userId      Int      @unique
+    firstName   String
+    lastName    String
+    dateOfBirth DateTime
+    address     String
+    SSN         String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    User        Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserAthleticAchievements {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  gameName   String
-  medalCount Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  User       Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id         Int      @id @default(autoincrement())
+    userId     Int
+    gameName   String
+    medalCount Int
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    User       Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserGallery {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  path      String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    path      String   @db.Text
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserRating {
-  id         Int      @id @default(autoincrement())
-  jobId      Int
-  athleteId  Int
-  businessId Int?
-  rating     Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  Job        Jobs?    @relation(fields: [jobId], references: [id])
-  Athlete    Users    @relation(name: "Athlete", fields: [athleteId], references: [id], onDelete: Cascade)
-  Business   Users?   @relation(name: "Business", fields: [businessId], references: [id])
+    id         Int      @id @default(autoincrement())
+    jobId      Int
+    athleteId  Int
+    businessId Int?
+    rating     Int
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    Job        Jobs?    @relation(fields: [jobId], references: [id])
+    Athlete    Users    @relation(name: "Athlete", fields: [athleteId], references: [id], onDelete: Cascade)
+    Business   Users?   @relation(name: "Business", fields: [businessId], references: [id])
 }
 
 model Transactions {
-  id              Int              @id @default(autoincrement())
-  userId          Int
-  amount          Int
-  transactionType TRANSACTION_TYPE
-  source          Json?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  User            Users            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id              Int              @id @default(autoincrement())
+    userId          Int
+    amount          Int
+    transactionType TRANSACTION_TYPE
+    source          Json?
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    User            Users            @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Sports {
-  id          Int           @id @default(autoincrement())
-  name        String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  Jobs        Jobs[]
-  AthleteInfo AthleteInfo[]
+    id                 Int                  @id @default(autoincrement())
+    name               String
+    createdAt          DateTime             @default(now())
+    updatedAt          DateTime             @updatedAt
+    Jobs               Jobs[]
+    SportSubCategories SportSubCategories[]
+}
+
+model SportSubCategories {
+    id          Int           @id @default(autoincrement())
+    sportId     Int
+    name        String
+    createdAt   DateTime      @default(now())
+    updatedAt   DateTime      @updatedAt
+    Sport       Sports        @relation(fields: [sportId], references: [id], onDelete: Cascade)
+    AthleteInfo AthleteInfo[]
 }
 
 model Jobs {
-  id                        Int                         @id @default(autoincrement())
-  userId                    Int
-  sportId                   Int?
-  title                     String                      @db.Text
-  description               String                      @db.Text
-  bannerImage               String                      @db.Text
-  salary                    Int
-  type                      JOB_TYPE
-  status                    JOB_STATUS                  @default(OPEN)
-  hasCompletedByAthlete     Boolean                     @default(false)
-  hasPaid                   Boolean                     @default(false)
-  createdAt                 DateTime                    @default(now())
-  updatedAt                 DateTime                    @updatedAt
-  User                      Users                       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Sport                     Sports?                     @relation(fields: [sportId], references: [id])
-  JobRequiredQualifications JobRequiredQualifications[]
-  UserSavedJobs             UserSavedJobs[]
-  UserHiddenJobs            UserHiddenJobs[]
-  JobApplications           JobApplications[]
-  ReportedJobs              ReportedJobs[]
-  UserRating                UserRating[]
+    id                        Int                         @id @default(autoincrement())
+    userId                    Int
+    sportId                   Int?
+    title                     String                      @db.Text
+    description               String                      @db.Text
+    bannerImage               String                      @db.Text
+    salary                    Int
+    type                      JOB_TYPE
+    status                    JOB_STATUS                  @default(OPEN)
+    hasCompletedByAthlete     Boolean                     @default(false)
+    hasPaid                   Boolean                     @default(false)
+    createdAt                 DateTime                    @default(now())
+    updatedAt                 DateTime                    @updatedAt
+    User                      Users                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+    Sport                     Sports?                     @relation(fields: [sportId], references: [id])
+    JobRequiredQualifications JobRequiredQualifications[]
+    UserSavedJobs             UserSavedJobs[]
+    UserHiddenJobs            UserHiddenJobs[]
+    JobApplications           JobApplications[]
+    ReportedJobs              ReportedJobs[]
+    UserRating                UserRating[]
 }
 
 model JobApplications {
-  id        Int                    @id @default(autoincrement())
-  jobId     Int
-  userId    Int
-  status    JOB_APPLICATION_STATUS @default(APPLIED)
-  createdAt DateTime               @default(now())
-  updatedAt DateTime               @updatedAt
-  Job       Jobs                   @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  User      Users                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id        Int                    @id @default(autoincrement())
+    jobId     Int
+    userId    Int
+    status    JOB_APPLICATION_STATUS @default(APPLIED)
+    createdAt DateTime               @default(now())
+    updatedAt DateTime               @updatedAt
+    Job       Jobs                   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    User      Users                  @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model JobRequiredQualifications {
-  id          Int      @id @default(autoincrement())
-  jobId       Int
-  description String   @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  Job         Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    id          Int      @id @default(autoincrement())
+    jobId       Int
+    description String   @db.Text
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    Job         Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }
 
 model UserSavedJobs {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  jobId     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Job       Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    jobId     Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    Job       Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }
 
 model UserNotifications {
-  id               Int               @id @default(autoincrement())
-  userId           Int
-  title            String            @db.Text
-  description      String            @db.Text
-  hasSeen          Boolean           @default(false)
-  notificationType NOTIFICATION_TYPE
-  metadata         Json?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  User             Users             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id               Int               @id @default(autoincrement())
+    userId           Int
+    title            String            @db.Text
+    description      String            @db.Text
+    hasSeen          Boolean           @default(false)
+    notificationType NOTIFICATION_TYPE
+    metadata         Json?
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+    User             Users             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserHiddenJobs {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  jobId     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Job       Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    jobId     Int
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    Job       Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }
 
 model UserFavoriteBusinesses {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  businessId Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  User       Users    @relation(name: "User", fields: [userId], references: [id], onDelete: Cascade)
-  Business   Users    @relation(name: "Business", fields: [businessId], references: [id], onDelete: Cascade)
+    id         Int      @id @default(autoincrement())
+    userId     Int
+    businessId Int
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    User       Users    @relation(name: "User", fields: [userId], references: [id], onDelete: Cascade)
+    Business   Users    @relation(name: "Business", fields: [businessId], references: [id], onDelete: Cascade)
 }
 
 model ReportedJobs {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  jobId     Int
-  reason    String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Job       Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    jobId     Int
+    reason    String   @db.Text
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    Job       Jobs     @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }
 
 model Chats {
-  id            Int             @id @default(autoincrement())
-  name          String?
-  type          CHAT_TYPE
-  Participants  Participants[]
-  Messages      Messages[]
-  UserSchedules UserSchedules[]
+    id            Int             @id @default(autoincrement())
+    name          String?
+    type          CHAT_TYPE
+    Participants  Participants[]
+    Messages      Messages[]
+    UserSchedules UserSchedules[]
 }
 
 model Participants {
-  id       Int       @id @default(autoincrement())
-  chatId   Int
-  userId   Int
-  exitedAt DateTime?
-  isAdmin  Boolean   @default(false)
-  Chat     Chats     @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  User     Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id       Int       @id @default(autoincrement())
+    chatId   Int
+    userId   Int
+    exitedAt DateTime?
+    isAdmin  Boolean   @default(false)
+    Chat     Chats     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+    User     Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Messages {
-  id            Int             @id @default(autoincrement())
-  chatId        Int
-  senderId      Int
-  attachment    String?
-  content       String?         @db.Text
-  messageType   MESSAGE_TYPE    @default(TEXT)
-  createdAt     DateTime        @default(now())
-  Chat          Chats           @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  User          Users           @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  MessageStatus MessageStatus[]
+    id            Int             @id @default(autoincrement())
+    chatId        Int
+    senderId      Int
+    attachment    String?
+    content       String?         @db.Text
+    messageType   MESSAGE_TYPE    @default(TEXT)
+    createdAt     DateTime        @default(now())
+    Chat          Chats           @relation(fields: [chatId], references: [id], onDelete: Cascade)
+    User          Users           @relation(fields: [senderId], references: [id], onDelete: Cascade)
+    MessageStatus MessageStatus[]
 }
 
 model MessageStatus {
-  id        Int      @id @default(autoincrement())
-  messageId Int
-  userId    Int
-  seen      Boolean  @default(false)
-  Message   Messages @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id        Int      @id @default(autoincrement())
+    messageId Int
+    userId    Int
+    seen      Boolean  @default(false)
+    Message   Messages @relation(fields: [messageId], references: [id], onDelete: Cascade)
+    User      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSchedules {
-  id              Int      @id @default(autoincrement())
-  chatId          Int
-  organizerId     Int
-  attendeeId      Int
-  agenda          String
-  meetingDateTime DateTime
-  zoomMeetingLink String
-  createdAt       DateTime @default(now())
-  Organizer       Users    @relation("OrganizerSchedules", fields: [organizerId], references: [id], onDelete: Cascade)
-  Attendee        Users    @relation("AttendeeSchedules", fields: [attendeeId], references: [id], onDelete: Cascade)
-  Chat            Chats    @relation(fields: [chatId], references: [id], onDelete: Cascade)
+    id              Int      @id @default(autoincrement())
+    chatId          Int
+    organizerId     Int
+    attendeeId      Int
+    agenda          String
+    meetingDateTime DateTime
+    zoomMeetingLink String
+    createdAt       DateTime @default(now())
+    Organizer       Users    @relation("OrganizerSchedules", fields: [organizerId], references: [id], onDelete: Cascade)
+    Attendee        Users    @relation("AttendeeSchedules", fields: [attendeeId], references: [id], onDelete: Cascade)
+    Chat            Chats    @relation(fields: [chatId], references: [id], onDelete: Cascade)
 }
 
 model UserPreference {
-  id                       Int     @id @default(autoincrement())
-  userId                   Int     @unique
-  receivePushNotifications Boolean @default(true)
-  User                     Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id                       Int     @id @default(autoincrement())
+    userId                   Int     @unique
+    receivePushNotifications Boolean @default(true)
+    User                     Users   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Feedback {
-  id             Int              @id @default(autoincrement())
-  userId         Int
-  subject        String           @db.Text
-  description    String           @db.Text
-  createdAt      DateTime         @default(now())
-  User           Users            @relation(fields: [userId], references: [id])
-  FeedbackImages FeedbackImages[]
+    id             Int              @id @default(autoincrement())
+    userId         Int
+    subject        String           @db.Text
+    description    String           @db.Text
+    createdAt      DateTime         @default(now())
+    User           Users            @relation(fields: [userId], references: [id])
+    FeedbackImages FeedbackImages[]
 }
 
 model FeedbackImages {
-  id         Int      @id @default(autoincrement())
-  feedbackId Int
-  path       String   @db.Text
-  createdAt  DateTime @default(now())
-  Feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+    id         Int      @id @default(autoincrement())
+    feedbackId Int
+    path       String   @db.Text
+    createdAt  DateTime @default(now())
+    Feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
 }
 
 enum USER_ROLES {
-  ATHLETE
-  BUSINESS
-  ADMIN
+    ATHLETE
+    BUSINESS
+    ADMIN
 }
 
 enum GENDERS {
-  MALE
-  FEMALE
-  OTHER
+    MALE
+    FEMALE
+    OTHER
 }
 
 enum LOGIN_METHODS {
-  EMAIL
-  GOOGLE
-  FACEBOOK
-  APPLE
+    EMAIL
+    GOOGLE
+    FACEBOOK
+    APPLE
 }
 
 enum JOB_TYPE {
-  SOCIAL_MEDIA
-  MEET_AND_GREET
-  AUTOGRAPHS
-  PHOTO_SHOOTS
-  OTHER
+    SOCIAL_MEDIA
+    MEET_AND_GREET
+    AUTOGRAPHS
+    PHOTO_SHOOTS
+    OTHER
 }
 
 enum JOB_STATUS {
-  OPEN
-  FILLED
-  COMPLETED
+    OPEN
+    FILLED
+    COMPLETED
 }
 
 enum JOB_APPLICATION_STATUS {
-  APPLIED
-  WAIT_LISTED
-  REJECTED
-  HIRED
-  COMPLETED
+    APPLIED
+    WAIT_LISTED
+    REJECTED
+    HIRED
+    COMPLETED
 }
 
 enum CHAT_TYPE {
-  PRIVATE
-  GROUP
+    PRIVATE
+    GROUP
 }
 
 enum TRANSACTION_TYPE {
-  DEPOSIT
-  FEE
-  HOLD
-  PAYMENT
-  WITHDRAWAL
+    DEPOSIT
+    FEE
+    HOLD
+    PAYMENT
+    WITHDRAWAL
 }
 
 enum ATHLETE_EXPERIENCE {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-  EXPERT
-  ELITE
-  RECREATIONAL
-  SEMI_PROFESSIONAL
-  PROFESSIONAL
+    BEGINNER
+    INTERMEDIATE
+    ADVANCED
+    EXPERT
+    ELITE
+    RECREATIONAL
+    SEMI_PROFESSIONAL
+    PROFESSIONAL
 }
 
 enum MESSAGE_TYPE {
-  TEXT
-  SYSTEM
+    TEXT
+    SYSTEM
 }
 
 enum NOTIFICATION_TYPE {
-  PRIVATE_CHAT
-  GROUP_CHAT
-  JOB_APPLICATION
-  APPLICATION_WAIT_LISTED
-  APPLICATION_REJECTED
-  APPLICATION_SELECTED
-  JOB_COMPLETED
+    PRIVATE_CHAT
+    GROUP_CHAT
+    JOB_APPLICATION
+    APPLICATION_WAIT_LISTED
+    APPLICATION_REJECTED
+    APPLICATION_SELECTED
+    JOB_COMPLETED
 }
