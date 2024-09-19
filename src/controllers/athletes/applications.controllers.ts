@@ -29,7 +29,7 @@ const getMyApplications = async (req: AuthRequest, res: Response): Promise<Respo
 
   try {
     const jobApplications = await prisma.jobApplications.findMany({
-      where: { userId },
+      where: { userId, status: 'APPLIED' },
       select: {
         id: true,
         userId: true,
