@@ -53,7 +53,7 @@ type TUpdateProfileBody = {
 }
 
 type TUpdateAthleteInfoBody = {
-  instagramUsername?: string
+  instagramUsername?: string | null
   schoolName?: string
   universityName?: string
   sportSubCategoryId?: number
@@ -428,7 +428,7 @@ const updateAthleteInfo = async (
       }
     }
 
-    if (data.instagramUsername !== undefined) {
+    if (data.instagramUsername !== undefined && data.instagramUsername !== null) {
       const instagramFollowersCount = await getInstagramFollowerCount(data.instagramUsername)
 
       if (typeof instagramFollowersCount !== 'number') {

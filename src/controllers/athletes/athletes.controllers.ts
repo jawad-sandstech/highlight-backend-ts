@@ -42,13 +42,11 @@ const getAllAthletes = async (
       }
     }
 
-    if (instagramFollowersGreaterThan !== undefined) {
-      whereClause.instagramFollowersCount = {
-        gte: Number(instagramFollowersGreaterThan)
-      }
-    }
-
-    if (sportIds !== undefined || isUniversityAthlete !== undefined) {
+    if (
+      sportIds !== undefined ||
+      isUniversityAthlete !== undefined ||
+      instagramFollowersGreaterThan !== undefined
+    ) {
       whereClause.AthleteInfo = {}
 
       if (sportIds !== undefined) {
@@ -65,6 +63,12 @@ const getAllAthletes = async (
 
       if (isUniversityAthlete !== undefined) {
         whereClause.AthleteInfo.schoolName = null
+      }
+
+      if (instagramFollowersGreaterThan !== undefined) {
+        whereClause.AthleteInfo.instagramFollowersCount = {
+          gte: Number(instagramFollowersGreaterThan)
+        }
       }
     }
 

@@ -42,7 +42,7 @@ const updateAthleteInfo = Joi.object({
   query: Joi.object({}),
   params: Joi.object({}),
   body: Joi.object({
-    instagramUsername: Joi.string().optional(),
+    instagramUsername: Joi.string().allow(null).optional(),
     schoolName: Joi.string().optional(),
     universityName: Joi.string().optional(),
     sportSubCategoryId: Joi.number().optional(),

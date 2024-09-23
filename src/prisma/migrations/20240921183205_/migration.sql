@@ -37,7 +37,7 @@ CREATE TABLE `AthleteInfo` (
     `experience` ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT', 'ELITE', 'RECREATIONAL', 'SEMI_PROFESSIONAL', 'PROFESSIONAL') NULL,
     `schoolName` VARCHAR(191) NULL,
     `universityName` VARCHAR(191) NULL,
-    `sportId` INTEGER NULL,
+    `sportSubCategoryId` INTEGER NULL,
     `position` VARCHAR(191) NULL,
     `attachment` TEXT NULL,
     `bio` TEXT NULL,
@@ -161,6 +161,17 @@ CREATE TABLE `Transactions` (
 -- CreateTable
 CREATE TABLE `Sports` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `SportSubCategories` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `sportId` INTEGER NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -362,7 +373,7 @@ CREATE TABLE `FeedbackImages` (
 ALTER TABLE `AthleteInfo` ADD CONSTRAINT `AthleteInfo_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `AthleteInfo` ADD CONSTRAINT `AthleteInfo_sportId_fkey` FOREIGN KEY (`sportId`) REFERENCES `Sports`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `AthleteInfo` ADD CONSTRAINT `AthleteInfo_sportSubCategoryId_fkey` FOREIGN KEY (`sportSubCategoryId`) REFERENCES `SportSubCategories`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `BusinessInfo` ADD CONSTRAINT `BusinessInfo_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -393,6 +404,9 @@ ALTER TABLE `UserRating` ADD CONSTRAINT `UserRating_businessId_fkey` FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE `Transactions` ADD CONSTRAINT `Transactions_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SportSubCategories` ADD CONSTRAINT `SportSubCategories_sportId_fkey` FOREIGN KEY (`sportId`) REFERENCES `Sports`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Jobs` ADD CONSTRAINT `Jobs_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `Users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
