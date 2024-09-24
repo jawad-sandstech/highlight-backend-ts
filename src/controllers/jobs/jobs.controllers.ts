@@ -23,8 +23,7 @@ import validateRequestHandler from '../../utils/validateRequestHandler'
 import type { AuthRequest } from '../../interfaces/auth-request'
 import type { Response } from 'express'
 import config from '../../config/config'
-
-type JOB_TYPE = 'SOCIAL_MEDIA' | 'MEET_AND_GREET' | 'AUTOGRAPHS' | 'PHOTO_SHOOTS' | 'OTHER'
+import type { JOB_TYPE } from '@prisma/client'
 
 type TGetAllJobsQuery = {
   businessId?: string
@@ -85,7 +84,6 @@ const insufficientFundsMessage = `Insufficient funds. 💡 Non-Premium businesse
 const parseCreateJobFormData = (reqBody: any): TCreateJobBody => {
   const data: any = reqBody
 
-  data.requiredQualification = JSON.parse(String(reqBody.requiredQualification))
   data.salary = Number(reqBody.salary)
   data.sportId = Number(reqBody.sportId)
 
@@ -278,7 +276,7 @@ const createJob = async (
   const { is_draft: isDraft } = req.query
   const file = req.file
   req.body = parseCreateJobFormData(req.body)
-  const { requiredQualification, ...data } = req.body
+  const data = req.body
 
   const [success, error] = validateRequestHandler(jobValidation.createJob, req)
 
@@ -318,12 +316,7 @@ const createJob = async (
       data: {
         userId,
         ...data,
-        bannerImage,
-        JobRequiredQualifications: {
-          createMany: {
-            data: requiredQualification.map((i) => ({ description: i }))
-          }
-        }
+        bannerImage
       }
     })
 

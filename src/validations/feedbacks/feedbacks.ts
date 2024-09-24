@@ -24,8 +24,7 @@ const createFeedbacks = Joi.object({
           path: Joi.string().required()
         })
       )
-      .min(1)
-      .required()
+      .optional()
   })
 })
 

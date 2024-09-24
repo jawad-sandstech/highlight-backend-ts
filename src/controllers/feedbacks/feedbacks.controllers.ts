@@ -23,7 +23,7 @@ type TFeedback = Feedback & {
 type TCreateFeedbacksBody = {
   subject: string
   description: string
-  images: Array<{ path: string }>
+  images?: Array<{ path: string }>
 }
 
 const augmentFeedbacksWithImageUrls = (feedbacks: TFeedback[]): Feedback[] => {
@@ -118,15 +118,15 @@ const createFeedbacks = async (
     const feedback = await prisma.feedback.create({
       data: {
         userId,
-        ...data,
-        FeedbackImages: {
-          createMany: {
-            data: images
-          }
-        }
-      },
-      include: { FeedbackImages: true }
+        ...data
+      }
     })
+
+    if (images !== undefined) {
+      await prisma.feedbackImages.createMany({
+        data: images.map((i) => ({ feedbackId: feedback.id, path: i.path }))
+      })
+    }
 
     const response = createSuccessResponse(feedback)
     return res.status(response.status.code).json(response)

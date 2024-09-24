@@ -19,7 +19,7 @@ router.get(
 router.post(
   '/',
   authRequired(),
-  rolesRequired(['ATHLETE']),
+  rolesRequired(['BUSINESS']),
   validateRequest(rateValidations.giveRating),
   rateControllers.giveRating
 )

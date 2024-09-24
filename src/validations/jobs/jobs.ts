@@ -51,11 +51,17 @@ const createJob = Joi.object({
   body: Joi.object({
     title: Joi.string().required(),
     description: Joi.string().required(),
-    requiredQualification: Joi.array().items(Joi.string()).min(1).required(),
     salary: Joi.number().required(),
     sportId: Joi.number().required(),
     type: Joi.string()
-      .valid('SOCIAL_MEDIA', 'MEET_AND_GREET', 'AUTOGRAPHS', 'PHOTO_SHOOTS', 'OTHER')
+      .valid(
+        'SOCIAL_MEDIA',
+        'MEET_AND_GREET',
+        'AUTOGRAPHS',
+        'PHOTO_SHOOTS',
+        'OTHER',
+        'GUEST_APPEARANCE'
+      )
       .required()
   })
 })
