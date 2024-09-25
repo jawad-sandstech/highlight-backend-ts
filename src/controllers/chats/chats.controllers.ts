@@ -136,8 +136,13 @@ const createMessageInChat = async (
       senderId,
       content,
       attachment: attachmentPath
+    },
+    include: {
+      User: true
     }
   })
+
+  message.User.profilePicture &&= `${config.S3_ACCESS_URL}/${message.User.profilePicture}`
 
   return message
 }
