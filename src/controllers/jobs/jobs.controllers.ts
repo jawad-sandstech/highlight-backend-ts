@@ -69,7 +69,6 @@ type TUpdateJobParams = {
 type TUpdateJobBody = {
   title?: string
   description?: string
-  requiredQualification?: string[]
   salary?: number
   sportId?: number
   type?: JOB_TYPE
@@ -93,8 +92,10 @@ const parseCreateJobFormData = (reqBody: any): TCreateJobBody => {
 const parseUpdateJobFormData = (reqBody: any): TUpdateJobBody => {
   const data: any = reqBody
 
-  data.requiredQualification = JSON.parse(String(reqBody.requiredQualification))
-  data.salary = Number(reqBody.salary)
+  if (reqBody.salary !== undefined) {
+    data.salary = Number(reqBody.salary)
+  }
+
   data.sportId = Number(reqBody.sportId)
 
   return data
@@ -164,6 +165,7 @@ const getAllJobs = async (
     const jobs = await prisma.jobs.findMany({
       where: {
         ...whereClause,
+        hasPaid: true,
         status: 'OPEN',
         UserHiddenJobs: {
           none: {
@@ -526,7 +528,7 @@ const updateJob = async (
   const jobId = Number(req.params.jobId)
   const file = req.file
   req.body = parseUpdateJobFormData(req.body)
-  const { requiredQualification, ...data } = req.body
+  const data = req.body
 
   const [success, error] = validateRequestHandler(jobValidation.updateJob, req)
 
@@ -582,13 +584,6 @@ const updateJob = async (
     if (file !== undefined) {
       const bannerImage = await uploadJobBanner(file)
       await prisma.jobs.update({ where: { id: jobId }, data: { bannerImage } })
-    }
-
-    if (requiredQualification !== undefined) {
-      await prisma.jobRequiredQualifications.deleteMany({ where: { jobId } })
-      await prisma.jobRequiredQualifications.createMany({
-        data: requiredQualification.map((i) => ({ jobId, description: i }))
-      })
     }
 
     await prisma.jobs.update({

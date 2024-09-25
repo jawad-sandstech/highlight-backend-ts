@@ -82,7 +82,6 @@ const updateJob = Joi.object({
   body: Joi.object({
     title: Joi.string().optional(),
     description: Joi.string().optional(),
-    requiredQualification: Joi.array().items(Joi.string()).min(1).optional(),
     salary: Joi.number().optional(),
     sportId: Joi.number().optional(),
     type: Joi.string()

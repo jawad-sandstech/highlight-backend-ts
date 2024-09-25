@@ -85,6 +85,22 @@ type TDeleteGroupParams = {
   chatId: string
 }
 
+const getGroupIcon = async (chatId: number): Promise<string> => {
+  const chat = await prisma.chats.findUnique({
+    where: { id: chatId },
+    include: {
+      Participants: {
+        where: { isAdmin: true },
+        include: {
+          User: true
+        }
+      }
+    }
+  })
+
+  return `${config.S3_ACCESS_URL}/${chat?.Participants[0].User.profilePicture}`
+}
+
 const userHasAccessToChat = (userId: number, chat: TChatWithParticipants): boolean => {
   if (chat.type === 'PRIVATE') {
     return chat.Participants.some((participant) => participant.userId === userId)
@@ -177,19 +193,42 @@ const handleSocketIOCommunication = async (
         }
       })
 
-      const chatSummary = {
+      // const chatSummary = {
+      //   id: chat.id,
+      //   type: chat.type,
+      //   name:
+      //     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      //     chat.name ?? userId === socket.userId
+      //       ? chat.Participants.find((i) => i.userId !== userId)?.User.fullName
+      //       : chat.Participants.find((i) => i.userId === userId)?.User.fullName,
+      //   lastMessage: message,
+      //   unreadMessagesCount
+      // }
+
+      const chatSummary2 = {
         id: chat.id,
         type: chat.type,
         name:
-          // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-          chat.name ?? userId === socket.userId
+          chat.name !== null && chat.name !== undefined
+            ? chat.name
+            : userId === socket.userId
             ? chat.Participants.find((i) => i.userId !== userId)?.User.fullName
             : chat.Participants.find((i) => i.userId === userId)?.User.fullName,
+        icon:
+          chat.type === 'PRIVATE'
+            ? userId === socket.userId
+              ? `${config.S3_ACCESS_URL}/${
+                  chat.Participants.find((i) => i.userId !== userId)?.User?.profilePicture
+                }`
+              : `${config.S3_ACCESS_URL}/${
+                  chat.Participants.find((i) => i.userId === userId)?.User?.profilePicture
+                }`
+            : await getGroupIcon(chat.id),
         lastMessage: message,
         unreadMessagesCount
       }
 
-      socket.emit('updateChat', chatSummary)
+      socket.emit('updateChat', chatSummary2)
     }
 
     for (const userId of inactiveRoomUserIds) {
@@ -267,6 +306,12 @@ const getAllChats = async (
           id: chat.id,
           type: chat.type,
           name: chat.name ?? chat.Participants.find((i) => i.userId !== userId)?.User.fullName,
+          icon:
+            chat.type === 'PRIVATE'
+              ? `${config.S3_ACCESS_URL}/${
+                  chat.Participants.find((i) => i.userId !== userId)?.User?.profilePicture
+                }`
+              : await getGroupIcon(chat.id),
           lastMessage,
           unreadMessagesCount
         }
@@ -346,10 +391,12 @@ const getAllMessages = async (
 
     const exitedAt = participant.exitedAt ?? new Date()
 
-    const messages = chat.Messages.filter((message) => message.createdAt <= exitedAt).map((i) => ({
-      ...i,
-      attachment: `${config.S3_ACCESS_URL}/${i.attachment}`
-    }))
+    const messages = chat.Messages.filter((message) => message.createdAt <= exitedAt)
+
+    messages.forEach((i) => {
+      i.User.profilePicture &&= `${config.S3_ACCESS_URL}/${i.User.profilePicture}`
+      i.attachment &&= `${config.S3_ACCESS_URL}/${i.attachment}`
+    })
 
     const chatWithMessages = {
       ...chat,
@@ -484,7 +531,7 @@ const uploadAttachment = async (file: Express.Multer.File): Promise<string> => {
 
     const command = new PutObjectCommand({
       Bucket: config.S3_BUCKET_NAME,
-      Key: `${folderName}/${randomImageName}`,
+      Key: `${folderName}/${randomImageName}.${file.mimetype.split('/')[1]}`,
       Body: file.buffer,
       ContentType: file.mimetype
     })
@@ -662,6 +709,9 @@ const createMessage = async (
       where: { id: chatId },
       include: {
         Participants: {
+          where: {
+            exitedAt: null
+          },
           include: {
             User: true
           }

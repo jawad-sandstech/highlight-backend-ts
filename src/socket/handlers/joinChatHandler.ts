@@ -2,6 +2,7 @@ import prisma from '../../config/database.config'
 
 import type { Socket } from 'socket.io'
 import type { Chats, Participants, Users, Messages } from '@prisma/client'
+import config from '../../config/config'
 
 type TChatWithParticipants = Chats & {
   Participants: Array<Participants & { User: Users }>
@@ -42,6 +43,22 @@ const userHasAccessToChat = (userId: number, chat: TChatWithParticipants): boole
   return false
 }
 
+const getGroupIcon = async (chatId: number): Promise<string> => {
+  const chat = await prisma.chats.findUnique({
+    where: { id: chatId },
+    include: {
+      Participants: {
+        where: { isAdmin: true },
+        include: {
+          User: true
+        }
+      }
+    }
+  })
+
+  return `${config.S3_ACCESS_URL}/${chat?.Participants[0].User.profilePicture}`
+}
+
 const joinChatHandler = async (socket: Socket, chatId: number): Promise<void> => {
   try {
     if (isNaN(chatId) || chatId <= 0) {
@@ -74,6 +91,12 @@ const joinChatHandler = async (socket: Socket, chatId: number): Promise<void> =>
       id: chat.id,
       type: chat.type,
       name: chat.name ?? chat.Participants.find((i) => i.userId !== socket.userId)?.User.fullName,
+      icon:
+        chat.type === 'PRIVATE'
+          ? `${config.S3_ACCESS_URL}/${
+              chat.Participants.find((i) => i.userId !== socket.userId)?.User?.profilePicture
+            }`
+          : await getGroupIcon(chat.id),
       lastMessage: chat.Messages[0],
       unreadMessagesCount: 0
     }

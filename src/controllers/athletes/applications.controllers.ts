@@ -88,6 +88,16 @@ const createApplication = async (
       data: { userId, jobId }
     })
 
+    const existingSavedJob = await prisma.userSavedJobs.findFirst({
+      where: { userId, jobId }
+    })
+
+    if (existingSavedJob !== null) {
+      await prisma.userSavedJobs.delete({
+        where: { id: existingSavedJob.id }
+      })
+    }
+
     await sendNotification(
       job.userId,
       'New Application',
